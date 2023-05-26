@@ -1,0 +1,14 @@
+[Unit]
+Description=wg stats
+After=syslog.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+PIDFile=/run/wg-stats.pid
+ExecStart=/root/wg-stats/wg-stats
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
