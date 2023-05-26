@@ -1,8 +1,7 @@
 import { component$, useSignal, useTask$ } from "@builder.io/qwik";
-import { DocumentHead, useLocation } from "@builder.io/qwik-city";
+import { DocumentHead } from "@builder.io/qwik-city";
 
 export default component$(() => {
-  const location = useLocation();
   const users = useSignal([
     { Name: "test", Rx: 0, Tx: 0, LastestHandshake: "" },
   ]);
@@ -14,8 +13,9 @@ export default component$(() => {
   const isAdmin = useSignal(false);
   useTask$(async () => {
     setInterval(async () => {
-      const res = await fetch(`127.0.0.1:5051/api`);
+      const res = await fetch(`http://127.0.0.1:5051/api`);
       const data = await res.json();
+      console.log(data)
       let tRx = 0;
       let tTx = 0;
       for (let i = data.Users.length; i-- > 0; ) {
