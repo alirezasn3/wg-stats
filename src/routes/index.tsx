@@ -13,7 +13,7 @@ export default component$(() => {
   const isAdmin = useSignal(false);
   useVisibleTask$(async () => {
     setInterval(async () => {
-      const res = await fetch('/api');
+      const res = await fetch('http://my.stats:5051/api');
       const data = await res.json();
       console.log(data)
       let tRx = 0;
