@@ -13,9 +13,9 @@ export default component$(() => {
   const isAdmin = useSignal(false);
   useVisibleTask$(async () => {
     setInterval(async () => {
-      const res = await fetch('http://my.stats:5051/api');
+      const res = await fetch("http://my.stats:5051/api", { mode: "no-cors" });
       const data = await res.json();
-      console.log(data)
+      console.log(data);
       let tRx = 0;
       let tTx = 0;
       for (let i = data.Users.length; i-- > 0; ) {
