@@ -212,6 +212,5 @@ func main() {
 		}
 		w.Write(bytes)
 	}))
-	http.Handle("/", http.FileServer(http.Dir("./dist")))
-	http.ListenAndServe(":5050", nil)
+	http.ListenAndServe(":5051", nil)
 }

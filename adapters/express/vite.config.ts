@@ -1,4 +1,4 @@
-import { staticAdapter } from '@builder.io/qwik-city/adapters/static/vite';
+import { nodeServerAdapter } from '@builder.io/qwik-city/adapters/node-server/vite';
 import { extendConfig } from '@builder.io/qwik-city/vite';
 import baseConfig from '../../vite.config';
 
@@ -7,13 +7,9 @@ export default extendConfig(baseConfig, () => {
     build: {
       ssr: true,
       rollupOptions: {
-        input: ['@qwik-city-plan'],
+        input: ['src/entry.express.tsx', '@qwik-city-plan'],
       },
     },
-    plugins: [
-      staticAdapter({
-        origin: 'http://my.stats',
-      }),
-    ],
+    plugins: [nodeServerAdapter({ name: 'express' })],
   };
 });
