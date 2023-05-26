@@ -210,6 +210,7 @@ func main() {
 			w.Write([]byte("[]"))
 			return
 		}
+		w.Header().Add("Access-Control-Allow-Origin", "*")
 		w.Write(bytes)
 	}))
 	http.ListenAndServe(":5051", nil)
