@@ -1,9 +1,4 @@
-import {
-  component$,
-  useSignal,
-  // useTask$,
-  useVisibleTask$,
-} from "@builder.io/qwik";
+import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { DocumentHead } from "@builder.io/qwik-city";
 
 export default component$(() => {
@@ -16,38 +11,36 @@ export default component$(() => {
   const currentRx = useSignal("0");
   const currentTx = useSignal("0");
   const isAdmin = useSignal(false);
-  async function fetchData() {
-    const res = await fetch(`http://127.0.0.1:5051/api`);
-    const data = await res.json();
-    console.log(data);
-    let tRx = 0;
-    let tTx = 0;
-    for (let i = data.Users.length; i-- > 0; ) {
-      tRx += data.Users[i].Rx;
-      tTx += data.Users[i].Tx;
-    }
-    totalRx.value = (tRx / 1000000000).toFixed(2);
-    totalTx.value = (tTx / 1000000000).toFixed(2);
-    total.value = ((tRx + tTx) / 1000000000).toFixed(2);
-    currentRx.value = (data.Rx / 8000000).toFixed(2);
-    currentTx.value = (data.Rx / 8000000).toFixed(2);
-    users.value = data.Users;
-    isAdmin.value = data.isAdmin;
-    // if (groupView) {
-    //   const groups = {};
-    //   for (let i = data.Users.length; i-- > 0; ) {
-    //     const gn = data.Users[i].Name.split("-")[0];
-    //     if (groups[gn]) groups[gn].push(data.Users[i]);
-    //     else {
-    //       groups[gn] = [data.Users[i]];
-    //     }
-    //   }
-    //   console.log(groups);
-    // }
-  }
-  // useTask$(fetchData);
-  useVisibleTask$(() => {
-    setInterval(fetchData, 1000);
+  useVisibleTask$(async () => {
+    setInterval(async () => {
+      const res = await fetch(`http://127.0.0.1:5051/api`);
+      const data = await res.json();
+      console.log(data)
+      let tRx = 0;
+      let tTx = 0;
+      for (let i = data.Users.length; i-- > 0; ) {
+        tRx += data.Users[i].Rx;
+        tTx += data.Users[i].Tx;
+      }
+      totalRx.value = (tRx / 1000000000).toFixed(2);
+      totalTx.value = (tTx / 1000000000).toFixed(2);
+      total.value = ((tRx + tTx) / 1000000000).toFixed(2);
+      currentRx.value = (data.Rx / 8000000).toFixed(2);
+      currentTx.value = (data.Rx / 8000000).toFixed(2);
+      users.value = data.Users;
+      isAdmin.value = data.isAdmin;
+      // if (groupView) {
+      //   const groups = {};
+      //   for (let i = data.Users.length; i-- > 0; ) {
+      //     const gn = data.Users[i].Name.split("-")[0];
+      //     if (groups[gn]) groups[gn].push(data.Users[i]);
+      //     else {
+      //       groups[gn] = [data.Users[i]];
+      //     }
+      //   }
+      //   console.log(groups);
+      // }
+    }, 1000);
   });
   return (
     <>
