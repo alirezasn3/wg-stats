@@ -1,7 +1,7 @@
 import {
   component$,
   useSignal,
-  useTask$,
+  // useTask$,
   useVisibleTask$,
 } from "@builder.io/qwik";
 import { DocumentHead } from "@builder.io/qwik-city";
@@ -45,7 +45,7 @@ export default component$(() => {
     //   console.log(groups);
     // }
   }
-  useTask$(fetchData);
+  // useTask$(fetchData);
   useVisibleTask$(() => {
     setInterval(fetchData, 1000);
   });
