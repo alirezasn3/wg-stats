@@ -53,9 +53,9 @@ export default component$(() => {
           <>
             <div class="font-semibold mt-4">Current Usage</div>
             <div class="flex my-2 text-green-500 text-sm md:text-lg font-bold">
-              <div>↓ {totalRx} MiB</div>
+              <div>↓ {currentRx} MiB</div>
               <div class="border-l-[1px] border-slate-600 ml-1 pl-1">
-                ↑ {totalTx} MiB
+                ↑ {currentTx} MiB
               </div>
             </div>
           </>
