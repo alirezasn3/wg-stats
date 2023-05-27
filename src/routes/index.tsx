@@ -143,19 +143,19 @@ export default component$(() => {
                         {i + 1}. {u.Name}
                       </span>
                       <div class="flex my-2 text-green-500">
-                        <div class="flex">
+                        <div class="flex items-center">
                           <img
                             src="download.png"
                             alt="download icon"
-                            class="invert w-6 h-6 pr-1"
+                            class="invert w-4 h-4 md:w-6 md:h-6"
                           />{" "}
                           {(u.Rx / 1000000000).toFixed(2)} GiB
                         </div>
-                        <div class="border-l-2 border-slate-600 mx-1 px-1 flex">
+                        <div class="border-l-2 pl-0.5 ml-1 border-slate-600 flex items-center">
                           <img
                             src="upload.png"
                             alt="upload icon"
-                            class="invert w-6 h-6 pr-1"
+                            class="invert w-4 h-4 md:w-6 md:h-6"
                           />
                           {(u.Tx / 1000000000).toFixed(2)} GiB
                         </div>
@@ -179,19 +179,19 @@ export default component$(() => {
                     {i + 1}. {u.Name}
                   </span>
                   <div class="flex my-2 text-green-500">
-                    <div class="flex">
+                    <div class="flex items-center">
                       <img
                         src="download.png"
                         alt="download icon"
-                        class="invert w-6 h-6 pr-1"
+                        class="invert w-4 h-4 md:w-6 md:h-6"
                       />{" "}
                       {(u.Rx / 1000000000).toFixed(2)} GiB
                     </div>
-                    <div class="border-l-2 border-slate-600 mx-1 px-1 flex">
+                    <div class="border-l-2 border-slate-600 pl-0.5 ml-1 flex items-center">
                       <img
                         src="upload.png"
                         alt="upload icon"
-                        class="invert w-6 h-6 pr-1"
+                        class="invert w-4 h-4 md:w-6 md:h-6"
                       />
                       {(u.Tx / 1000000000).toFixed(2)} GiB
                     </div>
