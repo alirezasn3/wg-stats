@@ -147,7 +147,7 @@ export default component$(() => {
                       {(
                         g.reduce((partialSum, a) => partialSum + a.Rx, 0) /
                         1000000000
-                      ).toFixed(2)}
+                      ).toFixed(2)}{" "}
                       GiB
                     </div>
                     <div class="border-l-2 pl-0.5 ml-1 border-slate-800 flex items-center">
@@ -159,7 +159,7 @@ export default component$(() => {
                       {(
                         g.reduce((partialSum, a) => partialSum + a.Tx, 0) /
                         1000000000
-                      ).toFixed(2)}
+                      ).toFixed(2)}{" "}
                       GiB
                     </div>
                   </div>
