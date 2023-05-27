@@ -30,6 +30,7 @@ export default component$(() => {
       const data = await res.json();
       let tRx = 0;
       let tTx = 0;
+      Object.keys(groups.value).forEach((gn) => (groups.value[gn].length = 0));
       for (let i = data.Users.length; i-- > 0; ) {
         tRx += data.Users[i].Rx;
         tTx += data.Users[i].Tx;
