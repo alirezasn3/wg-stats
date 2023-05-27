@@ -43,23 +43,22 @@ export default component$(() => {
       <div class="border-b-2 border-slate-600 flex flex-col justify-center items-center my-8 mx-4">
         <div class="font-semibold">Total Usage</div>
         <div class="flex my-2 text-green-500 text-sm md:text-lg font-bold">
-          <div>&#8595 {totalRx} GiB</div>
+          <div>↓ {totalRx} GiB</div>
           <div class="border-x-[1px] border-slate-600 mx-1 px-1">
-            &#8593 {totalTx} GiB
+            ↑ {totalTx} GiB
           </div>
-          <div>&#8721 {total} GiB</div>
-        </div>
-        <div x-show="isAdmin[0]" class="font-semibold mt-4">
-          Current Usage
+          <div>Σ {total} GiB</div>
         </div>
         {isAdmin && (
-          <div class="flex my-2 text-green-500 text-sm md:text-lg font-bold">
-            <>test</>
-            <div>&#8595 {totalRx} MiB</div>
-            <div class="border-l-[1px] border-slate-600 ml-1 pl-1">
-              &#8593 {totalTx} MiB
+          <>
+            <div class="font-semibold mt-4">Current Usage</div>
+            <div class="flex my-2 text-green-500 text-sm md:text-lg font-bold">
+              <div>↓ {totalRx} MiB</div>
+              <div class="border-l-[1px] border-slate-600 ml-1 pl-1">
+                ↑ {totalTx} MiB
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
       {users.value.map((u, i) => (
@@ -67,11 +66,11 @@ export default component$(() => {
           <span class="font-semibold">{i + 1}. </span>
           <span>{u.Name}</span>
           <div class="flex my-2 text-green-500 text-sm md:text-lg">
-            <div>&#8595 {(u.Rx / 1000000000).toFixed(2)} GiB</div>
+            <div>↓ {(u.Rx / 1000000000).toFixed(2)} GiB</div>
             <div class="border-x-[1px] border-slate-600 mx-1 px-1">
-              &#8593 {(u.Tx / 1000000000).toFixed(2)} GiB
+              ↑ {(u.Tx / 1000000000).toFixed(2)} GiB
             </div>
-            <div>&#8721 {((u.Rx + u.Tx) / 1000000000).toFixed(2)} GiB</div>
+            <div>Σ {((u.Rx + u.Tx) / 1000000000).toFixed(2)} GiB</div>
           </div>
           <div class="text-sm">
             Latest Handshake:
