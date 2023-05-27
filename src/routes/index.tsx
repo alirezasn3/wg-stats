@@ -1,16 +1,23 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { DocumentHead } from "@builder.io/qwik-city";
 
+interface User {
+  Name: string;
+  Rx: number;
+  Tx: number;
+  LastestHandshake: string;
+}
+
 export default component$(() => {
-  const users = useSignal([
-    { Name: "test", Rx: 0, Tx: 0, LastestHandshake: "" },
-  ]);
+  const users = useSignal<User[]>([]);
+  const groups = useSignal<{ [key: string]: User[] }>({});
   const totalRx = useSignal("0");
   const totalTx = useSignal("0");
   const total = useSignal("0");
   const currentRx = useSignal("0");
   const currentTx = useSignal("0");
   const isAdmin = useSignal(false);
+  const showGroupView = useSignal(false);
   useVisibleTask$(async () => {
     setInterval(async () => {
       const res = await fetch("http://my.stats:5051/api");
@@ -27,19 +34,17 @@ export default component$(() => {
       total.value = ((tRx + tTx) / 1000000000).toFixed(2);
       currentRx.value = (data.Rx / 8000000).toFixed(2);
       currentTx.value = (data.Rx / 8000000).toFixed(2);
-      users.value = data.Users;
+      if (showGroupView.value) {
+        for (let i = data.Users.length; i-- > 0; ) {
+          const gn = data.Users[i].Name.split("-")[0];
+          if (groups.value[gn]) groups.value[gn].push(data.Users[i]);
+          else groups.value[gn] = [data.Users[i]];
+        }
+        console.log(groups);
+      } else {
+        users.value = data.Users;
+      }
       isAdmin.value = data.isAdmin;
-      // if (groupView) {
-      //   const groups = {};
-      //   for (let i = data.Users.length; i-- > 0; ) {
-      //     const gn = data.Users[i].Name.split("-")[0];
-      //     if (groups[gn]) groups[gn].push(data.Users[i]);
-      //     else {
-      //       groups[gn] = [data.Users[i]];
-      //     }
-      //   }
-      //   console.log(groups);
-      // }
     }, 1000);
   });
   return (
@@ -65,6 +70,9 @@ export default component$(() => {
             ></div>
           </div>
         )}
+      </div>
+      <div onClick$={() => (showGroupView.value = !showGroupView.value)}>
+        change view
       </div>
       {users.value.map((u, i) => (
         <div class="bg-slate-700 rounded mx-4 my-2 px-2 py-1 font-semibold">

@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 PIDFile=/run/wg-stats.pid
-ExecStart=cd /root/wg-stats/wg-stats && npm run serve
+ExecStart=/root/wg-stats/wg-stats
 Restart=on-failure
 RestartSec=5s
 
