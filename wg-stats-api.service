@@ -1,5 +1,5 @@
 [Unit]
-Description=wg stats
+Description=wg stats api
 After=syslog.target network-online.target
 Wants=network-online.target
 
