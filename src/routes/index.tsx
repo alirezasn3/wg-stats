@@ -54,7 +54,7 @@ export default component$(() => {
     <div class={`block ${isAdmin.value ? "md:grid grid-cols-2 h-full" : ""}`}>
       {isAdmin.value && (
         <div class="my-2 border-r-2 border-slate-900">
-          <span class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-800 flex items-center justify-between font-bold text-2xl">
+          <span class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-900 flex items-center justify-between font-bold text-2xl">
             Server Stats
           </span>
           <div class="text-sm md:text-lg md:h-[calc(100%-80px)] font-bold bg-slate-900 mx-2 px-2 rounded border-2 border-slate-800">
@@ -108,22 +108,24 @@ export default component$(() => {
         </div>
       )}
       <div class="max-h-full md:overflow-auto">
-        <div class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-800 flex items-center justify-between">
-          <div class="flex items-center">
-            <img
-              onClick$={() => (showGroupView.value = !showGroupView.value)}
-              class="w-10 p-1 invert rounded-full hover:cursor-pointer mr-4"
-              src={showGroupView.value ? "ungroup.png" : "group.png"}
-              alt="group icon"
-            />
-            {/* <img
+        {isAdmin.value && (
+          <div class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-900 flex items-center justify-between">
+            <div class="flex items-center">
+              <img
+                onClick$={() => (showGroupView.value = !showGroupView.value)}
+                class="w-10 p-1 invert rounded-full hover:cursor-pointer mr-4"
+                src={showGroupView.value ? "ungroup.png" : "group.png"}
+                alt="group icon"
+              />
+              {/* <img
               class="w-10 p-1 invert rounded-full hover:cursor-pointer"
               src="sort.png"
               alt="sort icon"
             /> */}
+            </div>
+            <span class="font-bold text-lg">Sorting users by usage</span>
           </div>
-          <span class="font-bold text-lg">Sorting users by usage</span>
-        </div>
+        )}
         {showGroupView.value
           ? Object.values(groups.value).map((g, j) => (
               <div
@@ -133,6 +135,35 @@ export default component$(() => {
                 <span class="text-lg text-orange-500">
                   {j + 1}. {g[0].Name.split("-")[0]}
                 </span>
+                <div class="flex items-center justify-between py-2 mb-4 border-b-2 border-slate-800">
+                  <span>Total Usage:</span>
+                  <div class="flex my-2 text-green-500">
+                    <div class="flex items-center">
+                      <img
+                        src="download.png"
+                        alt="download icon"
+                        class="invert w-6 h-6"
+                      />
+                      {(
+                        g.reduce((partialSum, a) => partialSum + a.Rx, 0) /
+                        1000000000
+                      ).toFixed(2)}
+                      GiB
+                    </div>
+                    <div class="border-l-2 pl-0.5 ml-1 border-slate-800 flex items-center">
+                      <img
+                        src="upload.png"
+                        alt="upload icon"
+                        class="invert w-6 h-6"
+                      />
+                      {(
+                        g.reduce((partialSum, a) => partialSum + a.Tx, 0) /
+                        1000000000
+                      ).toFixed(2)}
+                      GiB
+                    </div>
+                  </div>
+                </div>
                 {g.map((u, i) => (
                   <div
                     key={u.Name + i}
@@ -148,10 +179,10 @@ export default component$(() => {
                             src="download.png"
                             alt="download icon"
                             class="invert w-4 h-4 md:w-6 md:h-6"
-                          />{" "}
+                          />
                           {(u.Rx / 1000000000).toFixed(2)} GiB
                         </div>
-                        <div class="border-l-2 pl-0.5 ml-1 border-slate-600 flex items-center">
+                        <div class="border-l-2 pl-0.5 ml-1 border-slate-700 flex items-center">
                           <img
                             src="upload.png"
                             alt="upload icon"
@@ -163,7 +194,7 @@ export default component$(() => {
                     </div>
                     <div class="mt-3 truncate text-blue-500">
                       <span class="text-white">Latest Handshake: </span>
-                      <span>{u.LastestHandshake || "never"}</span>
+                      <div>{u.LastestHandshake || "never"}</div>
                     </div>
                   </div>
                 ))}
@@ -184,10 +215,10 @@ export default component$(() => {
                         src="download.png"
                         alt="download icon"
                         class="invert w-4 h-4 md:w-6 md:h-6"
-                      />{" "}
+                      />
                       {(u.Rx / 1000000000).toFixed(2)} GiB
                     </div>
-                    <div class="border-l-2 border-slate-600 pl-0.5 ml-1 flex items-center">
+                    <div class="border-l-2 border-slate-800 pl-0.5 ml-1 flex items-center">
                       <img
                         src="upload.png"
                         alt="upload icon"
@@ -199,7 +230,7 @@ export default component$(() => {
                 </div>
                 <div class="mt-3 tracking-tighter truncate text-blue-500">
                   <span class="text-white">Latest Handshake: </span>
-                  <span>{u.LastestHandshake || ""}</span>
+                  <div>{u.LastestHandshake || "never"}</div>
                 </div>
               </div>
             ))}
