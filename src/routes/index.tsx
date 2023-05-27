@@ -40,10 +40,12 @@ export default component$(() => {
       totalRx.value = tRx;
       totalTx.value = tTx;
       users.value = data.Users;
-      isAdmin.value = data.isAdmin;
+      isAdmin.value = data.IsAdmin;
       const rxSteps = (data.Rx - currentRx.value) / 50;
       const txSteps = (data.Tx - currentTx.value) / 50;
       for (let i = 20; i-- > 0; ) {
+        if (currentRx.value + rxSteps < 0 || currentTx.value + txSteps < 0)
+          break;
         currentRx.value += rxSteps;
         currentTx.value += txSteps;
         await sleep(50);
@@ -51,13 +53,10 @@ export default component$(() => {
     }, 1000);
   });
   return users.value.length ? (
-    <div class={`block ${isAdmin.value ? "md:grid grid-cols-2 h-full" : ""}`}>
+    <div class="">
       {isAdmin.value && (
         <div class="my-2 border-r-2 border-slate-900">
-          <span class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-900 flex items-center justify-between font-bold text-2xl">
-            Server Stats
-          </span>
-          <div class="text-sm md:text-lg md:h-[calc(100%-80px)] font-bold bg-slate-900 mx-2 px-2 rounded border-2 border-slate-800">
+          <div class="md:h-[calc(100%-80px)] bg-slate-900 mx-2 px-2 rounded border-2 border-slate-800">
             <div class="flex items-center my-4 text-green-500">
               <span class="text-white w-[30%] md:w-[33.3%]">Total Usage:</span>
               <div class="w-[35%] md:w-[33.3%] flex items-center">
@@ -96,14 +95,6 @@ export default component$(() => {
                 {(currentTx.value / 8000000).toFixed(2)} MiB
               </div>
             </div>
-            <span class="flex items-center my-8">
-              <span class="pr-1 w-[30%] md:w-[33.3%]">Users: </span>
-              <span>{users.value.length}</span>
-            </span>
-            <span class="flex items-center my-8">
-              <span class="pr-1 w-[30%] md:w-[33.3%]">User Groups: </span>
-              <span>{Object.keys(groups.value).length}</span>
-            </span>
           </div>
         </div>
       )}
@@ -117,22 +108,28 @@ export default component$(() => {
                 src={showGroupView.value ? "ungroup.png" : "group.png"}
                 alt="group icon"
               />
-              {/* <img
-              class="w-10 p-1 invert rounded-full hover:cursor-pointer"
-              src="sort.png"
-              alt="sort icon"
-            /> */}
             </div>
-            <span class="font-bold text-lg">Sorting users by usage</span>
+            {showGroupView.value ? (
+              <span>
+                <span class="text-orange-500">
+                  {Object.keys(groups.value).length}
+                </span>{" "}
+                User Groups
+              </span>
+            ) : (
+              <span>
+                <span class="text-orange-500">{users.value.length}</span> Users
+              </span>
+            )}
           </div>
         )}
         {showGroupView.value
           ? Object.values(groups.value).map((g, j) => (
               <div
                 key={g[0].Name}
-                class="bg-slate-900 border-2 border-slate-800 rounded mx-2 my-4 px-2 py-1 font-bold"
+                class="bg-slate-900 border-2 border-slate-800 rounded mx-2 my-4 px-2 py-1"
               >
-                <span class="text-lg text-orange-500">
+                <span class="text-orange-500">
                   {j + 1}. {g[0].Name.split("-")[0]}
                 </span>
                 <div class="flex items-center justify-between py-2 mb-4 border-b-2 border-slate-800">
@@ -203,10 +200,10 @@ export default component$(() => {
           : users.value.map((u, i) => (
               <div
                 key={i}
-                class="bg-slate-900 border-2 border-slate-800 rounded mx-2 my-4 px-2 py-1 font-bold"
+                class="bg-slate-900 border-2 border-slate-800 rounded mx-2 my-4 px-2 py-1"
               >
                 <div class="flex items-center justify-between border-b-[1px] border-slate-800 pb-1.5">
-                  <span class="md:text-lg truncate">
+                  <span class="truncate">
                     {i + 1}. {u.Name}
                   </span>
                   <div class="flex my-2 text-green-500">
@@ -237,9 +234,7 @@ export default component$(() => {
       </div>
     </div>
   ) : (
-    <div class="font-bold text-xl flex items-center justify-center h-full ">
-      Loading...
-    </div>
+    <div class="flex items-center justify-center h-full ">Loading...</div>
   );
 });
 

@@ -17,12 +17,45 @@ var admins []string
 var Rx int
 var Tx int
 
+type Database struct {
+	Path  string
+	Fd    *os.File
+	Users []User
+}
+
+func (db *Database) Init(path string) {
+	db.Path = path
+	data, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	json.Unmarshal(data, &db.Users)
+	db.Fd, err = os.Create(db.Path)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (db *Database) UpdateUserByName(name string, user User) {
+	for i := 0; i < len(db.Users); i++ {
+		if db.Users[i].Name == name {
+			db.Users[i] = user
+		}
+	}
+}
+
+func (db *Database) Commit() {
+	bytes, _ := json.Marshal(db.Users)
+	db.Fd.Write(bytes)
+}
+
 type User struct {
 	Name             string
 	Rx               int
 	Tx               int
 	LastestHandshake string
 	AllowedIps       string
+	ExpiresInDays    int
 }
 
 type bwOutput struct{}
@@ -142,6 +175,9 @@ func findUserByIp(ip string) string {
 }
 
 func main() {
+	db := Database{}
+	db.Init("db.json")
+	defer db.Commit()
 	admins = os.Args[1:]
 	go func() {
 		cmd := exec.Command("vnstat", "-l")
@@ -153,31 +189,7 @@ func main() {
 	go func() {
 		for range time.NewTicker(time.Second).C {
 			users, _ = getUsers()
-		}
-	}()
-	go func() {
-		for range time.NewTicker(time.Minute).C {
-			f, err := os.Create("./backup.txt")
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			users, err := getUsers()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			bytes, err := json.Marshal(users)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			_, err = f.Write(bytes)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			f.Close()
+			db.Users = users
 		}
 	}()
 	http.Handle("/api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -204,7 +216,7 @@ func main() {
 		data["Users"] = temp
 		data["Rx"] = Rx
 		data["Tx"] = Tx
-		data["isAdmin"] = isAdmin
+		data["IsAdmin"] = isAdmin
 		bytes, err := json.Marshal(data)
 		if err != nil {
 			w.Write([]byte("[]"))
