@@ -57,57 +57,57 @@ export default component$(() => {
           <span class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-800 flex items-center justify-between font-bold text-2xl">
             Server Stats
           </span>
-          <div class="text-lg h-[calc(100%-80px)] font-bold bg-slate-900 mx-2 my-4 px-2 py-4 rounded border-2 border-slate-800">
-            <div class="flex items-center  my-4 text-green-500">
-              <span class="text-white w-[33.3%]">Total Usage:</span>
-              <div class="w-[33.3%] flex items-center">
+          <div class="text-sm md:text-lg md:h-[calc(100%-80px)] font-bold bg-slate-900 mx-2 px-2 rounded border-2 border-slate-800">
+            <div class="flex items-center my-4 text-green-500">
+              <span class="text-white w-[30%] md:w-[33.3%]">Total Usage:</span>
+              <div class="w-[35%] md:w-[33.3%] flex items-center">
                 <img
                   src="download.png"
                   alt="download icon"
-                  class="invert h-8 w-8 pr-0.5"
+                  class="invert h-6 w-6 pr-0.5"
                 />
                 {(totalRx.value / 1000000000).toFixed(2)} GiB
               </div>
-              <div class="w-[33.3%] flex items-center">
+              <div class="w-[35%] md:w-[33.3%] flex items-center">
                 <img
                   src="upload.png"
                   alt="upload icon"
-                  class="invert h-8 w-8 pr-0.5"
+                  class="invert h-6 w-6 pr-0.5"
                 />
                 {(totalTx.value / 1000000000).toFixed(2)} GiB
               </div>
             </div>
             <div class="flex items-center my-8 text-green-500">
-              <span class="text-white w-[33.3%]">Bandwidth:</span>
-              <div class="w-[33.3%] flex items-center">
+              <span class="text-white w-[30%] md:w-[33.3%]">Bandwidth:</span>
+              <div class="w-[35%] md:w-[33.3%] flex items-center">
                 <img
                   src="download.png"
                   alt="download icon"
-                  class="invert h-8 w-8 pr-0.5"
+                  class="invert h-6 w-6 pr-0.5"
                 />
                 {(currentRx.value / 8000000).toFixed(2)} MiB
               </div>
-              <div class="w-[33.3%] flex items-center">
+              <div class="w-[35%] md:w-[33.3%] flex items-center">
                 <img
                   src="upload.png"
                   alt="upload icon"
-                  class="invert h-8 w-8 pr-0.5"
+                  class="invert h-6 w-6 pr-0.5"
                 />
                 {(currentTx.value / 8000000).toFixed(2)} MiB
               </div>
             </div>
             <span class="flex items-center my-8">
-              <span class="pr-1 w-[33.3%]">Users: </span>
+              <span class="pr-1 w-[30%] md:w-[33.3%]">Users: </span>
               <span>{users.value.length}</span>
             </span>
             <span class="flex items-center my-8">
-              <span class="pr-1 w-[33.3%]">User Groups: </span>
+              <span class="pr-1 w-[30%] md:w-[33.3%]">User Groups: </span>
               <span>{Object.keys(groups.value).length}</span>
             </span>
           </div>
         </div>
       )}
-      <div class="max-h-full overflow-auto">
+      <div class="max-h-full md:overflow-auto">
         <div class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-800 flex items-center justify-between">
           <div class="flex items-center">
             <img
@@ -139,7 +139,7 @@ export default component$(() => {
                     class="bg-slate-800 my-2 px-2 py-1 rounded"
                   >
                     <div class="flex items-center justify-between border-b-[1px] border-slate-700 pb-1.5">
-                      <span>
+                      <span class="truncate">
                         {i + 1}. {u.Name}
                       </span>
                       <div class="flex my-2 text-green-500">
@@ -175,7 +175,7 @@ export default component$(() => {
                 class="bg-slate-900 border-2 border-slate-800 rounded mx-2 my-4 px-2 py-1 font-bold"
               >
                 <div class="flex items-center justify-between border-b-[1px] border-slate-800 pb-1.5">
-                  <span class="text-lg">
+                  <span class="md:text-lg truncate">
                     {i + 1}. {u.Name}
                   </span>
                   <div class="flex my-2 text-green-500">
