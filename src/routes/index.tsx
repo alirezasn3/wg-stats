@@ -161,7 +161,7 @@ export default component$(() => {
                         </div>
                       </div>
                     </div>
-                    <div class="mt-3 tracking-tighter truncate text-blue-500">
+                    <div class="mt-3 truncate text-blue-500">
                       <span class="text-white">Latest Handshake: </span>
                       <span>{u.LastestHandshake || "never"}</span>
                     </div>
