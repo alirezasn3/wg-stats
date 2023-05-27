@@ -11,14 +11,14 @@ interface User {
 
 export default component$(() => {
   const users = useSignal<User[]>([]);
-  const groups = useSignal<{ [key: string]: User[] }>({});
+  // const groups = useSignal<{ [key: string]: User[] }>({});
   const totalRx = useSignal("0");
   const totalTx = useSignal("0");
   const total = useSignal("0");
   const currentRx = useSignal("0");
   const currentTx = useSignal("0");
   const isAdmin = useSignal(false);
-  const showGroupView = useSignal(false);
+  // const showGroupView = useSignal(false);
   useVisibleTask$(async () => {
     setInterval(async () => {
       const res = await fetch("http://my.stats:5051/api");
