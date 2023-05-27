@@ -16,12 +16,10 @@ async function sleep(ms: number) {
 export default component$(() => {
   const users = useSignal<User[]>([]);
   const groups = useSignal<{ [key: string]: User[] }>({});
-  const totalRx = useSignal("0");
-  const totalTx = useSignal("0");
-  const currentRx = useSignal("0");
-  const currentRxBytes = useSignal(0);
-  const currentTx = useSignal("0");
-  const currentTxBytes = useSignal(0);
+  const totalRx = useSignal(0);
+  const totalTx = useSignal(0);
+  const currentRx = useSignal(0);
+  const currentTx = useSignal(0);
   const isAdmin = useSignal(false);
   const showGroupView = useSignal(false);
   useVisibleTask$(() => {
@@ -39,32 +37,20 @@ export default component$(() => {
           groups.value[groupName].push(data.Users[i]);
         else groups.value[groupName] = [data.Users[i]];
       }
-      totalRx.value = (tRx / 1000000000).toFixed(2);
-      totalTx.value = (tTx / 1000000000).toFixed(2);
+      totalRx.value = tRx;
+      totalTx.value = tTx;
       users.value = data.Users;
       isAdmin.value = data.isAdmin;
-
-      const rxDiff = data.Rx - currentRxBytes.value;
-      const txDiff = data.Tx - currentTxBytes.value;
-      currentRxBytes.value = data.Rx;
-      currentTxBytes.value = data.Tx;
-
-      const rxSteps = rxDiff / 50;
-      const txSteps = txDiff / 50;
+      const rxSteps = (data.Rx - currentRx.value) / 50;
+      const txSteps = (data.Tx - currentTx.value) / 50;
       for (let i = 20; i-- > 0; ) {
-        currentRx.value = ((currentRxBytes.value + rxSteps) / 8000000).toFixed(
-          2
-        );
-        currentRxBytes.value += rxSteps;
-        currentTx.value = ((currentTxBytes.value + txSteps) / 8000000).toFixed(
-          2
-        );
-        currentTxBytes.value += txSteps;
+        currentRx.value += rxSteps;
+        currentTx.value += txSteps;
         await sleep(50);
       }
     }, 1000);
   });
-  return (
+  return users.value.length ? (
     <div class={`block ${isAdmin.value ? "md:grid grid-cols-2 h-full" : ""}`}>
       {isAdmin.value && (
         <div class="my-2 border-r-2 border-slate-900">
@@ -80,15 +66,15 @@ export default component$(() => {
                   alt="download icon"
                   class="invert h-8 w-8 pr-0.5"
                 />
-                {totalRx} GiB
+                {(totalRx.value / 1000000000).toFixed(2)} GiB
               </div>
-              <div class="w-[33.3%] border-l-2 border-slate-800 pl-2 flex items-center">
+              <div class="w-[33.3%] flex items-center">
                 <img
                   src="upload.png"
                   alt="upload icon"
                   class="invert h-8 w-8 pr-0.5"
                 />
-                {totalTx} GiB
+                {(totalTx.value / 1000000000).toFixed(2)} GiB
               </div>
             </div>
             <div class="flex items-center my-8 text-green-500">
@@ -99,15 +85,15 @@ export default component$(() => {
                   alt="download icon"
                   class="invert h-8 w-8 pr-0.5"
                 />
-                {currentRx} MiB
+                {(currentRx.value / 8000000).toFixed(2)} MiB
               </div>
-              <div class="w-[33.3%] border-l-2 border-slate-800 pl-2 flex items-center">
+              <div class="w-[33.3%] flex items-center">
                 <img
                   src="upload.png"
                   alt="upload icon"
                   class="invert h-8 w-8 pr-0.5"
                 />
-                {currentRx} MiB
+                {(currentTx.value / 8000000).toFixed(2)} MiB
               </div>
             </div>
           </div>
@@ -118,21 +104,18 @@ export default component$(() => {
           <div class="flex items-center">
             <img
               onClick$={() => (showGroupView.value = !showGroupView.value)}
-              class="w-10 p-1 invert border-2 border-black rounded-full hover:cursor-pointer mr-4"
+              class="w-10 p-1 invert rounded-full hover:cursor-pointer mr-4"
               src={showGroupView.value ? "ungroup.png" : "group.png"}
               alt="group icon"
             />
-            <img
-              class="w-10 p-1 invert border-2 border-black rounded-full hover:cursor-pointer"
+            {/* <img
+              class="w-10 p-1 invert rounded-full hover:cursor-pointer"
               src="sort.png"
               alt="sort icon"
-            />
+            /> */}
           </div>
           <span class="font-bold text-lg">Sorting users by usage</span>
         </div>
-        {!users.value.length && (
-          <div class="font-bold text-xl text-center">Loading...</div>
-        )}
         {showGroupView.value
           ? Object.values(groups.value).map((g, j) => (
               <div
@@ -213,6 +196,10 @@ export default component$(() => {
               </div>
             ))}
       </div>
+    </div>
+  ) : (
+    <div class="font-bold text-xl flex items-center justify-center h-full ">
+      Loading...
     </div>
   );
 });
