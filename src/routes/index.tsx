@@ -71,28 +71,40 @@ export default component$(() => {
           </div>
         )}
       </div>
-      <div onClick$={() => (showGroupView.value = !showGroupView.value)}>
+      <div
+        class="bg-orange-500 rounded mb-8"
+        onClick$={() => (showGroupView.value = !showGroupView.value)}
+      >
         change view
       </div>
-      {users.value.map((u, i) => (
-        <div class="bg-slate-700 rounded mx-4 my-2 px-2 py-1 font-semibold">
-          <span class="font-semibold">{i + 1}. </span>
-          <span>{u.Name}</span>
-          <div class="flex my-2 text-green-500 text-sm md:text-lg">
-            <div>&#8595 {(u.Rx / 1000000000).toFixed(2)} GiB</div>
-            <div class="border-x-[1px] border-slate-600 mx-1 px-1">
-              &#8593 {(u.Tx / 1000000000).toFixed(2)} GiB
+      {showGroupView.value
+        ? users.value.map((u, i) => (
+            <div class="bg-slate-700 rounded mx-4 my-2 px-2 py-1 font-semibold">
+              <span class="font-semibold">{i + 1}. </span>
+              <span>{u.Name}</span>
+              <div class="flex my-2 text-green-500 text-sm md:text-lg">
+                <div>&#8595 {(u.Rx / 1000000000).toFixed(2)} GiB</div>
+                <div class="border-x-[1px] border-slate-600 mx-1 px-1">
+                  &#8593 {(u.Tx / 1000000000).toFixed(2)} GiB
+                </div>
+                <div>&#8721 {((u.Rx + u.Tx) / 1000000000).toFixed(2)} GiB</div>
+              </div>
+              <div class="text-sm">
+                Latest Handshake:
+                <div class="text-blue-500 font-bold block md:inline text-xs md:text-base pt-2">
+                  {u.LastestHandshake || ""}
+                </div>
+              </div>
             </div>
-            <div>&#8721 {((u.Rx + u.Tx) / 1000000000).toFixed(2)} GiB</div>
-          </div>
-          <div class="text-sm">
-            Latest Handshake:
-            <div class="text-blue-500 font-bold block md:inline text-xs md:text-base pt-2">
-              {u.LastestHandshake || ""}
+          ))
+        : Object.values(groups.value).map((g) => (
+            <div>
+              {g[0].Name.split("-")[0]}
+              {g.map((u) => (
+                <div>{u.Name}</div>
+              ))}
             </div>
-          </div>
-        </div>
-      ))}
+          ))}
     </>
   );
 });
