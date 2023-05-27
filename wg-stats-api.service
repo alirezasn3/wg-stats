@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-PIDFile=/run/wg-stats.pid
+PIDFile=/run/wg-stats-api.pid
 ExecStart=/root/wg-stats/wg-stats
 Restart=on-failure
 RestartSec=5s
