@@ -29,7 +29,7 @@ export default component$(() => {
       let tRx = 0;
       let tTx = 0;
       Object.keys(groups.value).forEach((gn) => (groups.value[gn].length = 0));
-      for (let i = data.Users.length; i-- > 0; ) {
+      for (let i = 0; i < data.Users.length; i++) {
         tRx += data.Users[i].Rx;
         tTx += data.Users[i].Tx;
         const groupName = data.Users[i].Name.split("-")[0];
@@ -54,9 +54,9 @@ export default component$(() => {
     <div class={`block ${isAdmin.value ? "md:grid grid-cols-2 h-full" : ""}`}>
       {isAdmin.value && (
         <div class="my-2 border-r-2 border-slate-900">
-          <div class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-800 flex items-center justify-between">
-            <span class="font-bold text-2xl">Server Stats</span>
-          </div>
+          <span class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-800 flex items-center justify-between font-bold text-2xl">
+            Server Stats
+          </span>
           <div class="text-lg h-[calc(100%-80px)] font-bold bg-slate-900 mx-2 my-4 px-2 py-4 rounded border-2 border-slate-800">
             <div class="flex items-center  my-4 text-green-500">
               <span class="text-white w-[33.3%]">Total Usage:</span>
@@ -96,6 +96,14 @@ export default component$(() => {
                 {(currentTx.value / 8000000).toFixed(2)} MiB
               </div>
             </div>
+            <span class="flex items-center my-8">
+              <span class="pr-1 w-[33.3%]">Users: </span>
+              <span>{users.value.length}</span>
+            </span>
+            <span class="flex items-center my-8">
+              <span class="pr-1 w-[33.3%]">User Groups: </span>
+              <span>{Object.keys(groups.value).length}</span>
+            </span>
           </div>
         </div>
       )}
