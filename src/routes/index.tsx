@@ -19,7 +19,7 @@ export default component$(() => {
   const currentTx = useSignal("0");
   const isAdmin = useSignal(false);
   // const showGroupView = useSignal(false);
-  useVisibleTask$(async () => {
+  useVisibleTask$(() => {
     setInterval(async () => {
       const res = await fetch("http://my.stats:5051/api");
       const data = await res.json();
@@ -53,13 +53,32 @@ export default component$(() => {
       </div>
       {isAdmin && (
         <div class="flex my-2 text-green-500 text-sm md:text-lg font-bold">
-          <div x-text="'&#8595 '+(current[0]||0)+' MiB'"></div>
-          <div
-            x-text="'&#8593 '+(current[1]||0)+' MiB'"
-            class="border-l-[1px] border-slate-600 ml-1 pl-1"
-          ></div>
+          <>test</>
+          <div>&#8595 {totalRx} MiB</div>
+          <div class="border-l-[1px] border-slate-600 ml-1 pl-1">
+            &#8593 {totalTx} MiB
+          </div>
         </div>
       )}
+      {users.value.map((u, i) => (
+        <div class="bg-slate-700 rounded mx-4 my-2 px-2 py-1 font-semibold">
+          <span class="font-semibold">{i + 1}. </span>
+          <span>{u.Name}</span>
+          <div class="flex my-2 text-green-500 text-sm md:text-lg">
+            <div>&#8595 {(u.Rx / 1000000000).toFixed(2)} GiB</div>
+            <div class="border-x-[1px] border-slate-600 mx-1 px-1">
+              &#8593 {(u.Tx / 1000000000).toFixed(2)} GiB
+            </div>
+            <div>&#8721 {((u.Rx + u.Tx) / 1000000000).toFixed(2)} GiB</div>
+          </div>
+          <div class="text-sm">
+            Latest Handshake:
+            <div class="text-blue-500 font-bold block md:inline text-xs md:text-base pt-2">
+              {u.LastestHandshake || ""}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 });
