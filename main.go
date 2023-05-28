@@ -82,6 +82,9 @@ func updatePeersInfo() {
 			i++
 			peers[info[0]].Name = string(bytes[i:j])
 		}
+		if peers[info[0]].ExpiresAt == 0 {
+			peers[info[0]].ExpiresAt = uint64(time.Now().Unix() + 60*60*24*30)
+		}
 	}
 }
 
@@ -114,7 +117,7 @@ func init() {
 	if err == nil {
 		for pk, p := range data {
 			if p.ExpiresAt == 0 {
-				peers[pk].ExpiresAt = uint64(time.Now().Unix() + 60*60*24*31)
+				peers[pk].ExpiresAt = uint64(time.Now().Unix() + 60*60*24*30)
 			} else {
 				peers[pk].ExpiresAt = p.ExpiresAt
 			}

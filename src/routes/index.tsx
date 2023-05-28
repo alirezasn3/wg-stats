@@ -256,11 +256,18 @@ export default component$(() => {
                         <div>
                           <span class="text-white">Expires In: </span>
                           <span
-                            title={new Date(u.ExpiresAt*1000).toLocaleDateString()}
+                            title={new Date(
+                              u.ExpiresAt * 1000
+                            ).toLocaleDateString()}
                           >
-                            {Math.ceil(
-                              (u.ExpiresAt - Date.now() / 1000) / 60 / 60 / 24
-                            )}{" "}
+                            {u.ExpiresAt
+                              ? Math.ceil(
+                                  (u.ExpiresAt - Date.now() / 1000) /
+                                    60 /
+                                    60 /
+                                    24
+                                )
+                              : "?"}{" "}
                             days
                           </span>
                         </div>
@@ -340,10 +347,14 @@ export default component$(() => {
                 <div class="flex justify-between items-center">
                   <div>
                     <span class="text-white">Expires In: </span>
-                    <span title={new Date(u.ExpiresAt*1000).toLocaleDateString()}>
-                      {Math.ceil(
-                        (u.ExpiresAt - Date.now() / 1000) / 60 / 60 / 24
-                      )}{" "}
+                    <span
+                      title={new Date(u.ExpiresAt * 1000).toLocaleDateString()}
+                    >
+                      {u.ExpiresAt
+                        ? Math.ceil(
+                            (u.ExpiresAt - Date.now() / 1000) / 60 / 60 / 24
+                          )
+                        : "?"}{" "}
                       days
                     </span>
                   </div>
