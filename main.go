@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"golang.org/x/exp/slices"
 )
 
 var admins []string
@@ -67,8 +65,8 @@ func updatePeersInfo() {
 		}
 		peers[info[0]].AllowedIps = string(info[3])
 		peers[info[0]].LatestHandshake, _ = strconv.ParseUint(string(info[4]), 10, 64)
-		peers[info[0]].Rx, _ = strconv.ParseUint(string(info[5]), 10, 64)
-		peers[info[0]].Tx, _ = strconv.ParseUint(string(info[6]), 10, 64)
+		peers[info[0]].Tx, _ = strconv.ParseUint(string(info[5]), 10, 64)
+		peers[info[0]].Rx, _ = strconv.ParseUint(string(info[6]), 10, 64)
 		if peers[info[0]].Name == "" {
 			bytes, err := os.ReadFile("/etc/wireguard/wg0.conf")
 			if err != nil {
@@ -87,7 +85,7 @@ func updatePeersInfo() {
 
 func findUserByIp(ip string) string {
 	for _, p := range peers {
-		if slices.Contains(strings.Split(p.AllowedIps, ","), ip) {
+		if strings.Contains(p.AllowedIps, ip) {
 			return p.Name
 		}
 	}

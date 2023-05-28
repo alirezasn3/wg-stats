@@ -5,12 +5,30 @@ interface User {
   Name: string;
   Rx: number;
   Tx: number;
-  LastestHandshake: string;
+  LatestHandshake: number;
   AllowedIps: string;
 }
 
 async function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+function formatTime(totalSeconds: number) {
+  totalSeconds = Math.trunc(Date.now() / 1000 - totalSeconds);
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  let t = "";
+  if (hours) t += hours + " hours";
+  if (minutes)
+    t += `${hours ? ", " : ""}${minutes} minute${minutes > 1 ? "s" : ""}`;
+  if (seconds)
+    t += `${hours || minutes ? ", " : ""} ${seconds} second${
+      seconds > 1 ? "s" : ""
+    }`;
+  t += " ago";
+  return t;
 }
 
 export default component$(() => {
@@ -29,17 +47,17 @@ export default component$(() => {
       let tRx = 0;
       let tTx = 0;
       Object.keys(groups.value).forEach((gn) => (groups.value[gn].length = 0));
-      for (let i = 0; i < data.Users.length; i++) {
-        tRx += data.Users[i].Rx;
-        tTx += data.Users[i].Tx;
-        const groupName = data.Users[i].Name.split("-")[0];
-        if (groups.value[groupName])
-          groups.value[groupName].push(data.Users[i]);
-        else groups.value[groupName] = [data.Users[i]];
+      const peers: User[] = Object.values(data.Users);
+      for (let i = 0; i < peers.length; i++) {
+        tRx += peers[i].Rx;
+        tTx += peers[i].Tx;
+        const groupName = peers[i].Name.split("-")[0];
+        if (groups.value[groupName]) groups.value[groupName].push(peers[i]);
+        else groups.value[groupName] = [peers[i]];
       }
       totalRx.value = tRx;
       totalTx.value = tTx;
-      users.value = data.Users;
+      users.value = peers;
       isAdmin.value = data.IsAdmin;
       const rxSteps = (data.Rx - currentRx.value) / 50;
       const txSteps = (data.Tx - currentTx.value) / 50;
@@ -50,6 +68,8 @@ export default component$(() => {
         currentTx.value += txSteps;
         await sleep(50);
       }
+      currentRx.value = data.Rx;
+      currentTx.value = data.Tx;
     }, 1000);
   });
   return users.value.length ? (
@@ -191,7 +211,7 @@ export default component$(() => {
                     </div>
                     <div class="mt-3 truncate text-blue-500">
                       <span class="text-white">Latest Handshake: </span>
-                      <div>{u.LastestHandshake || "never"}</div>
+                      <div>{formatTime(u.LatestHandshake) || "never"}</div>
                     </div>
                   </div>
                 ))}
@@ -227,7 +247,7 @@ export default component$(() => {
                 </div>
                 <div class="mt-3 tracking-tighter truncate text-blue-500">
                   <span class="text-white">Latest Handshake: </span>
-                  <div>{u.LastestHandshake || "never"}</div>
+                  <div>{formatTime(u.LatestHandshake) || "never"}</div>
                 </div>
               </div>
             ))}
