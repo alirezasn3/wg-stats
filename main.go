@@ -84,10 +84,19 @@ func updatePeersInfo() {
 	}
 }
 
-func findUserByIp(ip string) string {
+func findPeerNameByIp(ip string) string {
 	for _, p := range peers {
 		if strings.Contains(p.AllowedIps, ip) {
 			return p.Name
+		}
+	}
+	return ""
+}
+
+func findPeerPublicKeyByName(name string) string {
+	for pk, p := range peers {
+		if strings.Contains(p.Name, name) {
+			return pk
 		}
 	}
 	return ""
@@ -125,37 +134,55 @@ func main() {
 		}
 	}()
 	http.Handle("/api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		name := findUserByIp(strings.Split(r.RemoteAddr, ":")[0])
-		name = strings.Split(name, "-")[0]
-		tempPeers := make(map[string]*Peer)
-		isAdmin := false
-		for _, n := range admins {
-			if n == name {
-				isAdmin = true
-				break
+		if r.Method == "GET" {
+			name := findPeerNameByIp(strings.Split(r.RemoteAddr, ":")[0])
+			name = strings.Split(name, "-")[0]
+			tempPeers := make(map[string]*Peer)
+			isAdmin := false
+			for _, n := range admins {
+				if n == name {
+					isAdmin = true
+					break
+				}
 			}
-		}
-		if isAdmin {
-			tempPeers = peers
-		} else {
-			for pk, p := range peers {
-				if strings.Contains(p.Name, name) {
-					tempPeers[pk] = p
+			if isAdmin {
+				tempPeers = peers
+			} else {
+				for pk, p := range peers {
+					if strings.Contains(p.Name, name) {
+						tempPeers[pk] = p
+					}
+				}
+			}
+			data := make(map[string]interface{})
+			data["Peers"] = tempPeers
+			data["Rx"] = Rx
+			data["Tx"] = Tx
+			data["IsAdmin"] = isAdmin
+			bytes, err := json.Marshal(data)
+			if err != nil {
+				w.Write([]byte("{}"))
+				return
+			}
+			w.Header().Add("Access-Control-Allow-Origin", "*")
+			w.Write(bytes)
+		} else if r.Method == "POST" {
+			buffer := make([]byte, 1024*64)
+			n, err := r.Body.Read(buffer)
+			if err != nil {
+				w.WriteHeader(400)
+				return
+			}
+			data := make(map[string]interface{})
+			json.Unmarshal(buffer[:n], &data)
+			if name, ok := data["name"]; ok {
+				if expiresInDays, ok := data["expiresInDays"]; ok {
+					peers[findPeerPublicKeyByName(name.(string))].EpiresInDays = expiresInDays.(uint64)
+					w.WriteHeader(200)
+					return
 				}
 			}
 		}
-		data := make(map[string]interface{})
-		data["Peers"] = tempPeers
-		data["Rx"] = Rx
-		data["Tx"] = Tx
-		data["IsAdmin"] = isAdmin
-		bytes, err := json.Marshal(data)
-		if err != nil {
-			w.Write([]byte("{}"))
-			return
-		}
-		w.Header().Add("Access-Control-Allow-Origin", "*")
-		w.Write(bytes)
 	}))
 	http.ListenAndServe(":5051", nil)
 }
