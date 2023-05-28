@@ -15,6 +15,7 @@ async function sleep(ms: number) {
 }
 
 function formatTime(totalSeconds: number) {
+  if (!totalSeconds) return "unknown";
   totalSeconds = Math.trunc(Date.now() / 1000 - totalSeconds);
   const totalMinutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
@@ -246,14 +247,58 @@ export default component$(() => {
                         </div>
                       </div>
                     </div>
-                    <div class="mt-3 truncate text-blue-500">
+                    <div class="mt-3 mb-1 tracking-tighter truncate text-blue-500">
                       <span class="text-white">Latest Handshake: </span>
-                      <div>{formatTime(u.LatestHandshake) || "never"}</div>
-                      <span class="text-white">Expires In: </span>
-                      <span title={new Date(u.ExpiresAt).toLocaleDateString()}>
-                        {Math.ceil(u.ExpiresAt - Date.now() / 60 / 60 / 24)}{" "}
-                        days
-                      </span>
+                      <div class="mb-2 pb-2 border-b-[1px] border-slate-700">
+                        {formatTime(u.LatestHandshake)}
+                      </div>
+                      <div class="flex justify-between items-center">
+                        <div>
+                          <span class="text-white">Expires In: </span>
+                          <span
+                            title={new Date(u.ExpiresAt*1000).toLocaleDateString()}
+                          >
+                            {Math.ceil(
+                              (u.ExpiresAt - Date.now() / 1000) / 60 / 60 / 24
+                            )}{" "}
+                            days
+                          </span>
+                        </div>
+                        <div
+                          class={`${
+                            isAdmin.value ? "flex" : "hidden"
+                          } items-center`}
+                        >
+                          <img
+                            onClick$={() =>
+                              fetch("http://my.stats:5051/api", {
+                                method: "POST",
+                                body: JSON.stringify({
+                                  Name: u.Name,
+                                  ExpiresAt: u.ExpiresAt + 24 * 3600,
+                                }),
+                              })
+                            }
+                            src="add.png"
+                            alt="add icon"
+                            class="mr-4 invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                          />
+                          <img
+                            onClick$={() =>
+                              fetch("http://my.stats:5051/api", {
+                                method: "POST",
+                                body: JSON.stringify({
+                                  Name: u.Name,
+                                  ExpiresAt: u.ExpiresAt - 24 * 3600,
+                                }),
+                              })
+                            }
+                            src="remove.png"
+                            alt="remove icon"
+                            class="invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -287,19 +332,60 @@ export default component$(() => {
                   </div>
                 </div>
               </div>
-              <div class="mt-3 tracking-tighter truncate text-blue-500">
+              <div class="mt-3 mb-1 tracking-tighter truncate text-blue-500">
                 <span class="text-white">Latest Handshake: </span>
-                <div>{formatTime(u.LatestHandshake) || "never"}</div>
-                <span class="text-white">Expires In: </span>
-                <span title={new Date(u.ExpiresAt).toLocaleDateString()}>
-                  {Math.ceil(u.ExpiresAt - Date.now() / 60 / 60 / 24)} days
-                </span>
+                <div class="mb-2 pb-2 border-b-[1px] border-slate-800">
+                  {formatTime(u.LatestHandshake)}
+                </div>
+                <div class="flex justify-between items-center">
+                  <div>
+                    <span class="text-white">Expires In: </span>
+                    <span title={new Date(u.ExpiresAt*1000).toLocaleDateString()}>
+                      {Math.ceil(
+                        (u.ExpiresAt - Date.now() / 1000) / 60 / 60 / 24
+                      )}{" "}
+                      days
+                    </span>
+                  </div>
+                  <div
+                    class={`${isAdmin.value ? "flex" : "hidden"} items-center`}
+                  >
+                    <img
+                      onClick$={() =>
+                        fetch("http://my.stats:5051/api", {
+                          method: "POST",
+                          body: JSON.stringify({
+                            Name: u.Name,
+                            ExpiresAt: u.ExpiresAt + 24 * 3600,
+                          }),
+                        })
+                      }
+                      src="add.png"
+                      alt="add icon"
+                      class="mr-4 invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                    />
+                    <img
+                      onClick$={() =>
+                        fetch("http://my.stats:5051/api", {
+                          method: "POST",
+                          body: JSON.stringify({
+                            Name: u.Name,
+                            ExpiresAt: u.ExpiresAt - 24 * 3600,
+                          }),
+                        })
+                      }
+                      src="remove.png"
+                      alt="remove icon"
+                      class="invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           ))}
     </>
   ) : (
-    <div class="flex items-center justify-center h-full ">Loading...</div>
+    <div class="flex items-center justify-center h-[100vh]">Loading...</div>
   );
 });
 

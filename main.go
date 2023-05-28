@@ -172,6 +172,19 @@ func main() {
 			w.Header().Add("Access-Control-Allow-Origin", "*")
 			w.Write(bytes)
 		} else if r.Method == "POST" {
+			name := findPeerNameByIp(strings.Split(r.RemoteAddr, ":")[0])
+			name = strings.Split(name, "-")[0]
+			isAdmin := false
+			for _, n := range admins {
+				if n == name {
+					isAdmin = true
+					break
+				}
+			}
+			if !isAdmin {
+				w.WriteHeader(403)
+				return
+			}
 			defer r.Body.Close()
 			bytes, err := io.ReadAll(r.Body)
 			if err != nil {
