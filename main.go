@@ -101,11 +101,10 @@ func init() {
 	}
 	var data map[string]Peer
 	err = json.Unmarshal(bytes, &data)
-	if err != nil {
-		panic(err)
-	}
-	for pk, p := range data {
-		peers[pk].EpiresInDays = p.EpiresInDays
+	if err == nil {
+		for pk, p := range data {
+			peers[pk].EpiresInDays = p.EpiresInDays
+		}
 	}
 }
 
