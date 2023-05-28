@@ -250,7 +250,10 @@ export default component$(() => {
                       <span class="text-white">Latest Handshake: </span>
                       <div>{formatTime(u.LatestHandshake) || "never"}</div>
                       <span class="text-white">Expires In: </span>
-                      <div>{u.ExpiresAt} days</div>
+                      <span title={new Date(u.ExpiresAt).toLocaleDateString()}>
+                        {Math.ceil(u.ExpiresAt - Date.now() / 60 / 60 / 24)}{" "}
+                        days
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -288,7 +291,9 @@ export default component$(() => {
                 <span class="text-white">Latest Handshake: </span>
                 <div>{formatTime(u.LatestHandshake) || "never"}</div>
                 <span class="text-white">Expires In: </span>
-                <div>{u.ExpiresAt} days</div>
+                <span title={new Date(u.ExpiresAt).toLocaleDateString()}>
+                  {Math.ceil(u.ExpiresAt - Date.now() / 60 / 60 / 24)} days
+                </span>
               </div>
             </div>
           ))}

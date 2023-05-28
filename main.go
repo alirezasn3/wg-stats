@@ -113,7 +113,11 @@ func init() {
 	err = json.Unmarshal(bytes, &data)
 	if err == nil {
 		for pk, p := range data {
-			peers[pk].ExpiresAt = p.ExpiresAt
+			if p.ExpiresAt == 0 {
+				peers[pk].ExpiresAt = uint64(time.Now().Unix() + 60*60*24*31)
+			} else {
+				peers[pk].ExpiresAt = p.ExpiresAt
+			}
 		}
 	}
 }
