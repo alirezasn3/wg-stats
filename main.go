@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -108,6 +109,11 @@ func findPeerPublicKeyByName(name string) string {
 
 func init() {
 	updatePeersInfo()
+	_, err := os.Stat("/path/to/whatever")
+	if errors.Is(err, os.ErrNotExist) {
+		f, _ := os.Create("db.json")
+		f.Close()
+	}
 	bytes, err := os.ReadFile("db.json")
 	if err != nil {
 		panic(err)
