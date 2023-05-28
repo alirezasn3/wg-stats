@@ -150,11 +150,10 @@ func main() {
 	http.Handle("/api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			name := findPeerNameByIp(strings.Split(r.RemoteAddr, ":")[0])
-			name = strings.Split(name, "-")[0]
 			tempPeers := make(map[string]*Peer)
 			isAdmin := false
 			for _, n := range admins {
-				if n == name {
+				if strings.Contains(name, n+"-") {
 					isAdmin = true
 					break
 				}
@@ -182,10 +181,9 @@ func main() {
 			w.Write(bytes)
 		} else if r.Method == "POST" {
 			name := findPeerNameByIp(strings.Split(r.RemoteAddr, ":")[0])
-			name = strings.Split(name, "-")[0]
 			isAdmin := false
 			for _, n := range admins {
-				if n == name {
+				if strings.Contains(name, n+"-") {
 					isAdmin = true
 					break
 				}
