@@ -7,7 +7,7 @@ interface Peer {
   Tx: number;
   LatestHandshake: number;
   AllowedIps: string;
-  ExpiresInDays: number;
+  ExpiresAt: number;
 }
 
 async function sleep(ms: number) {
@@ -250,7 +250,7 @@ export default component$(() => {
                       <span class="text-white">Latest Handshake: </span>
                       <div>{formatTime(u.LatestHandshake) || "never"}</div>
                       <span class="text-white">Expires In: </span>
-                      <div>{u.ExpiresInDays} days</div>
+                      <div>{u.ExpiresAt} days</div>
                     </div>
                   </div>
                 ))}
@@ -288,7 +288,7 @@ export default component$(() => {
                 <span class="text-white">Latest Handshake: </span>
                 <div>{formatTime(u.LatestHandshake) || "never"}</div>
                 <span class="text-white">Expires In: </span>
-                <div>{u.ExpiresInDays} days</div>
+                <div>{u.ExpiresAt} days</div>
               </div>
             </div>
           ))}

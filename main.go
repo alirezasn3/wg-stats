@@ -23,7 +23,7 @@ type Peer struct {
 	LatestHandshake uint64 `json:"LatestHandshake"`
 	Rx              uint64 `json:"Rx"`
 	Tx              uint64 `json:"Tx"`
-	EpiresInDays    uint64 `json:"ExpiresInDays"`
+	ExpiresAt       uint64 `json:"ExpiresAt"`
 }
 
 type bwOutput struct{}
@@ -113,7 +113,7 @@ func init() {
 	err = json.Unmarshal(bytes, &data)
 	if err == nil {
 		for pk, p := range data {
-			peers[pk].EpiresInDays = p.EpiresInDays
+			peers[pk].ExpiresAt = p.ExpiresAt
 		}
 	}
 }
@@ -174,15 +174,14 @@ func main() {
 				w.WriteHeader(400)
 				return
 			}
-			data := make(map[string]interface{})
-			json.Unmarshal(bytes, &data)
-			if name, ok := data["name"]; ok {
-				if expiresInDays, ok := data["expiresInDays"]; ok {
-					peers[findPeerPublicKeyByName(name.(string))].EpiresInDays = expiresInDays.(uint64)
-					w.WriteHeader(200)
-					return
-				}
+			p := Peer{}
+			err = json.Unmarshal(bytes, &p)
+			if err != nil {
+				w.WriteHeader(400)
+				return
 			}
+			peers[findPeerPublicKeyByName(p.Name)].ExpiresAt = p.ExpiresAt
+			w.WriteHeader(200)
 		}
 	}))
 	http.ListenAndServe(":5051", nil)
