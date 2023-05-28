@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -167,14 +168,14 @@ func main() {
 			w.Header().Add("Access-Control-Allow-Origin", "*")
 			w.Write(bytes)
 		} else if r.Method == "POST" {
-			buffer := make([]byte, 1024*64)
-			n, err := r.Body.Read(buffer)
+			defer r.Body.Close()
+			bytes, err := io.ReadAll(r.Body)
 			if err != nil {
 				w.WriteHeader(400)
 				return
 			}
 			data := make(map[string]interface{})
-			json.Unmarshal(buffer[:n], &data)
+			json.Unmarshal(bytes, &data)
 			if name, ok := data["name"]; ok {
 				if expiresInDays, ok := data["expiresInDays"]; ok {
 					peers[findPeerPublicKeyByName(name.(string))].EpiresInDays = expiresInDays.(uint64)
