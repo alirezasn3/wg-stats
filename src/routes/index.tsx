@@ -47,7 +47,8 @@ export default component$(() => {
       let tRx = 0;
       let tTx = 0;
       Object.keys(groups.value).forEach((gn) => (groups.value[gn].length = 0));
-      const peers: User[] = Object.values(data.Users);
+      let peers: User[] = Object.values(data.Users);
+      peers = peers.sort((a, b) => (a.Rx >= b.Rx ? -1 : 1));
       for (let i = 0; i < peers.length; i++) {
         tRx += peers[i].Rx;
         tTx += peers[i].Tx;
@@ -68,66 +69,56 @@ export default component$(() => {
         currentTx.value += txSteps;
         await sleep(50);
       }
-      currentRx.value = data.Rx;
-      currentTx.value = data.Tx;
     }, 1000);
   });
   return users.value.length ? (
-    <div class="">
+    <>
       {isAdmin.value && (
-        <div class="my-2 border-r-2 border-slate-900">
-          <div class="md:h-[calc(100%-80px)] bg-slate-900 mx-2 px-2 rounded border-2 border-slate-800">
-            <div class="flex items-center my-4 text-green-500">
-              <span class="text-white w-[30%] md:w-[33.3%]">Total Usage:</span>
-              <div class="w-[35%] md:w-[33.3%] flex items-center">
-                <img
-                  src="download.png"
-                  alt="download icon"
-                  class="invert h-6 w-6 pr-0.5"
-                />
-                {(totalRx.value / 1000000000).toFixed(2)} GiB
-              </div>
-              <div class="w-[35%] md:w-[33.3%] flex items-center">
-                <img
-                  src="upload.png"
-                  alt="upload icon"
-                  class="invert h-6 w-6 pr-0.5"
-                />
-                {(totalTx.value / 1000000000).toFixed(2)} GiB
-              </div>
+        <div class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-900">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <img
+                onClick$={() => (showGroupView.value = !showGroupView.value)}
+                class="w-6 md:w-8 invert rounded-full hover:cursor-pointer"
+                src={showGroupView.value ? "ungroup.png" : "group.png"}
+                alt="group icon"
+              />
             </div>
-            <div class="flex items-center my-8 text-green-500">
-              <span class="text-white w-[30%] md:w-[33.3%]">Bandwidth:</span>
-              <div class="w-[35%] md:w-[33.3%] flex items-center">
+            <div class="hidden md:flex items-center text-green-500">
+              <div class="flex items-center">
                 <img
                   src="download.png"
                   alt="download icon"
-                  class="invert h-6 w-6 pr-0.5"
+                  class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
                 />
                 {(currentRx.value / 8000000).toFixed(2)} MiB
               </div>
-              <div class="w-[35%] md:w-[33.3%] flex items-center">
+              <div class="flex items-center border-l-2 border-slate-900 pl-1 ml-1.5">
                 <img
                   src="upload.png"
                   alt="upload icon"
-                  class="invert h-6 w-6 pr-0.5"
+                  class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
                 />
                 {(currentTx.value / 8000000).toFixed(2)} MiB
               </div>
             </div>
-          </div>
-        </div>
-      )}
-      <div class="max-h-full md:overflow-auto">
-        {isAdmin.value && (
-          <div class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-900 flex items-center justify-between">
-            <div class="flex items-center">
-              <img
-                onClick$={() => (showGroupView.value = !showGroupView.value)}
-                class="w-10 p-1 invert rounded-full hover:cursor-pointer mr-4"
-                src={showGroupView.value ? "ungroup.png" : "group.png"}
-                alt="group icon"
-              />
+            <div class="hidden md:flex items-center text-green-500">
+              <div class="flex items-center">
+                <img
+                  src="download.png"
+                  alt="download icon"
+                  class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
+                />
+                {(totalRx.value / 1000000000).toFixed(2)} GiB
+              </div>
+              <div class="flex items-center border-l-2 border-slate-900 pl-1 ml-1.5">
+                <img
+                  src="upload.png"
+                  alt="upload icon"
+                  class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
+                />
+                {(totalTx.value / 1000000000).toFixed(2)} GiB
+              </div>
             </div>
             {showGroupView.value ? (
               <span>
@@ -142,9 +133,54 @@ export default component$(() => {
               </span>
             )}
           </div>
-        )}
-        {showGroupView.value
-          ? Object.values(groups.value).map((g, j) => (
+          <div class="flex md:hidden justify-between mt-4 text-xs">
+            <div class="flex items-center text-green-500">
+              <div class="flex items-center">
+                <img
+                  src="download.png"
+                  alt="download icon"
+                  class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
+                />
+                {(currentRx.value / 8000000).toFixed(2)} MiB
+              </div>
+              <div class="flex items-center border-l-2 border-slate-900 pl-1 ml-1.5">
+                <img
+                  src="upload.png"
+                  alt="upload icon"
+                  class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
+                />
+                {(currentTx.value / 8000000).toFixed(2)} MiB
+              </div>
+            </div>
+            <div class="flex items-center text-green-500">
+              <div class="flex items-center">
+                <img
+                  src="download.png"
+                  alt="download icon"
+                  class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
+                />
+                {(totalRx.value / 1000000000).toFixed(2)} GiB
+              </div>
+              <div class="flex items-center border-l-2 border-slate-900 pl-1 ml-1.5">
+                <img
+                  src="upload.png"
+                  alt="upload icon"
+                  class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
+                />
+                {(totalTx.value / 1000000000).toFixed(2)} GiB
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showGroupView.value
+        ? Object.values(groups.value)
+            .sort((a, b) => {
+              const aRx = a.reduce((partialSum, a) => partialSum + a.Rx, 0);
+              const bRx = b.reduce((partialSum, a) => partialSum + a.Rx, 0);
+              return aRx >= bRx ? -1 : 1;
+            })
+            .map((g, j) => (
               <div
                 key={g[0].Name}
                 class="bg-slate-900 border-2 border-slate-800 rounded mx-2 my-4 px-2 py-1"
@@ -217,42 +253,41 @@ export default component$(() => {
                 ))}
               </div>
             ))
-          : users.value.map((u, i) => (
-              <div
-                key={i}
-                class="bg-slate-900 border-2 border-slate-800 rounded mx-2 my-4 px-2 py-1"
-              >
-                <div class="flex items-center justify-between border-b-[1px] border-slate-800 pb-1.5">
-                  <span class="truncate">
-                    {i + 1}. {u.Name}
-                  </span>
-                  <div class="flex my-2 text-green-500">
-                    <div class="flex items-center">
-                      <img
-                        src="download.png"
-                        alt="download icon"
-                        class="invert w-4 h-4 md:w-6 md:h-6"
-                      />
-                      {(u.Rx / 1000000000).toFixed(2)} GiB
-                    </div>
-                    <div class="border-l-2 border-slate-800 pl-0.5 ml-1 flex items-center">
-                      <img
-                        src="upload.png"
-                        alt="upload icon"
-                        class="invert w-4 h-4 md:w-6 md:h-6"
-                      />
-                      {(u.Tx / 1000000000).toFixed(2)} GiB
-                    </div>
+        : users.value.map((u, i) => (
+            <div
+              key={i}
+              class="bg-slate-900 border-2 border-slate-800 rounded mx-2 my-4 px-2 py-1"
+            >
+              <div class="flex items-center justify-between border-b-[1px] border-slate-800 pb-1.5">
+                <span class="truncate">
+                  {i + 1}. {u.Name}
+                </span>
+                <div class="flex my-2 text-green-500">
+                  <div class="flex items-center">
+                    <img
+                      src="download.png"
+                      alt="download icon"
+                      class="invert w-4 h-4 md:w-6 md:h-6"
+                    />
+                    {(u.Rx / 1000000000).toFixed(2)} GiB
+                  </div>
+                  <div class="border-l-2 border-slate-800 pl-0.5 ml-1 flex items-center">
+                    <img
+                      src="upload.png"
+                      alt="upload icon"
+                      class="invert w-4 h-4 md:w-6 md:h-6"
+                    />
+                    {(u.Tx / 1000000000).toFixed(2)} GiB
                   </div>
                 </div>
-                <div class="mt-3 tracking-tighter truncate text-blue-500">
-                  <span class="text-white">Latest Handshake: </span>
-                  <div>{formatTime(u.LatestHandshake) || "never"}</div>
-                </div>
               </div>
-            ))}
-      </div>
-    </div>
+              <div class="mt-3 tracking-tighter truncate text-blue-500">
+                <span class="text-white">Latest Handshake: </span>
+                <div>{formatTime(u.LatestHandshake) || "never"}</div>
+              </div>
+            </div>
+          ))}
+    </>
   ) : (
     <div class="flex items-center justify-center h-full ">Loading...</div>
   );
