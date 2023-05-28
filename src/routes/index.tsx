@@ -1,7 +1,7 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { DocumentHead } from "@builder.io/qwik-city";
 
-interface User {
+interface Peer {
   Name: string;
   Rx: number;
   Tx: number;
@@ -32,8 +32,8 @@ function formatTime(totalSeconds: number) {
 }
 
 export default component$(() => {
-  const users = useSignal<User[]>([]);
-  const groups = useSignal<{ [key: string]: User[] }>({});
+  const peers = useSignal<Peer[]>([]);
+  const groups = useSignal<{ [key: string]: Peer[] }>({});
   const totalRx = useSignal(0);
   const totalTx = useSignal(0);
   const currentRx = useSignal(0);
@@ -47,18 +47,18 @@ export default component$(() => {
       let tRx = 0;
       let tTx = 0;
       Object.keys(groups.value).forEach((gn) => (groups.value[gn].length = 0));
-      let peers: User[] = Object.values(data.Users);
-      peers = peers.sort((a, b) => (a.Rx >= b.Rx ? -1 : 1));
-      for (let i = 0; i < peers.length; i++) {
-        tRx += peers[i].Rx;
-        tTx += peers[i].Tx;
-        const groupName = peers[i].Name.split("-")[0];
-        if (groups.value[groupName]) groups.value[groupName].push(peers[i]);
-        else groups.value[groupName] = [peers[i]];
+      let tempPeers: Peer[] = Object.values(data.Peers);
+      tempPeers = tempPeers.sort((a, b) => (a.Rx >= b.Rx ? -1 : 1));
+      for (let i = 0; i < tempPeers.length; i++) {
+        tRx += tempPeers[i].Rx;
+        tTx += tempPeers[i].Tx;
+        const groupName = tempPeers[i].Name.split("-")[0];
+        if (groups.value[groupName]) groups.value[groupName].push(tempPeers[i]);
+        else groups.value[groupName] = [tempPeers[i]];
       }
       totalRx.value = tRx;
       totalTx.value = tTx;
-      users.value = peers;
+      peers.value = tempPeers;
       isAdmin.value = data.IsAdmin;
       const rxSteps = (data.Rx - currentRx.value) / 50;
       const txSteps = (data.Tx - currentTx.value) / 50;
@@ -71,7 +71,7 @@ export default component$(() => {
       }
     }, 1000);
   });
-  return users.value.length ? (
+  return peers.value.length ? (
     <>
       {isAdmin.value && (
         <div class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-900">
@@ -129,7 +129,7 @@ export default component$(() => {
               </span>
             ) : (
               <span>
-                <span class="text-orange-500">{users.value.length}</span> Users
+                <span class="text-orange-500">{peers.value.length}</span> Peers
               </span>
             )}
           </div>
@@ -253,7 +253,7 @@ export default component$(() => {
                 ))}
               </div>
             ))
-        : users.value.map((u, i) => (
+        : peers.value.map((u, i) => (
             <div
               key={i}
               class="bg-slate-900 border-2 border-slate-800 rounded mx-2 my-4 px-2 py-1"

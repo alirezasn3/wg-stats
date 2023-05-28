@@ -17,11 +17,12 @@ var Tx int
 var peers map[string]*Peer = make(map[string]*Peer)
 
 type Peer struct {
-	Name            string
-	AllowedIps      string
-	LatestHandshake uint64
-	Rx              uint64
-	Tx              uint64
+	Name            string `json:"Name"`
+	AllowedIps      string `json:"AllowedIps"`
+	LatestHandshake uint64 `json:"LatestHandshake"`
+	Rx              uint64 `json:"Rx"`
+	Tx              uint64 `json:"Tx"`
+	EpiresInDays    uint64 `json:"ExpiresInDays"`
 }
 
 type bwOutput struct{}
@@ -92,6 +93,22 @@ func findUserByIp(ip string) string {
 	return ""
 }
 
+func init() {
+	updatePeersInfo()
+	bytes, err := os.ReadFile("db.json")
+	if err != nil {
+		panic(err)
+	}
+	var data map[string]Peer
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		panic(err)
+	}
+	for pk, p := range data {
+		peers[pk].EpiresInDays = p.EpiresInDays
+	}
+}
+
 func main() {
 	admins = os.Args[1:]
 	go func() {
@@ -104,6 +121,8 @@ func main() {
 	go func() {
 		for range time.NewTicker(time.Second).C {
 			updatePeersInfo()
+			bytes, _ := json.Marshal(peers)
+			os.WriteFile("db.json", bytes, 0644)
 		}
 	}()
 	http.Handle("/api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -127,7 +146,7 @@ func main() {
 			}
 		}
 		data := make(map[string]interface{})
-		data["Users"] = tempPeers
+		data["Peers"] = tempPeers
 		data["Rx"] = Rx
 		data["Tx"] = Tx
 		data["IsAdmin"] = isAdmin
