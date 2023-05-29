@@ -1,5 +1,5 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
-import { DocumentHead } from "@builder.io/qwik-city";
+import { DocumentHead, useLocation } from "@builder.io/qwik-city";
 import Peer from "~/components/peer/peer";
 
 interface Peer {
@@ -29,9 +29,13 @@ export default component$(() => {
   const showGroupView = useSignal(false);
   const sortByUsage = useSignal(true);
 
+  const location = useLocation();
+
   useVisibleTask$(() => {
     setInterval(async () => {
-      const res = await fetch("http://my.stats:5051/api");
+      const res = await fetch(
+        `${location.url.protocol}//api.${location.url.hostname}/api`
+      );
       const data = await res.json();
       Object.keys(groups.value).forEach((gn) => (groups.value[gn].length = 0));
       const tempPeers: Peer[] = Object.values(data.peers);
