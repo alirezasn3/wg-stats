@@ -112,7 +112,7 @@ export default component$<PeerProps>((p) => {
         <div class={`${p.isAdmin ? "flex" : "hidden"} items-center`}>
           <img
             onClick$={() =>
-              fetch("http://my.stats:5051/api", {
+              fetch("api", {
                 method: "POST",
                 body: JSON.stringify({
                   Name: p.name,
@@ -126,7 +126,7 @@ export default component$<PeerProps>((p) => {
           />
           <img
             onClick$={() =>
-              fetch("http://my.stats:5051/api", {
+              fetch("api", {
                 method: "POST",
                 body: JSON.stringify({
                   Name: p.name,
