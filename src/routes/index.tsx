@@ -51,10 +51,6 @@ export default component$(() => {
       let tTx = 0;
       Object.keys(groups.value).forEach((gn) => (groups.value[gn].length = 0));
       let tempPeers: Peer[] = Object.values(data.Peers);
-      if (search.value !== "")
-        tempPeers = tempPeers.filter((p) =>
-          p.Name.toLowerCase().includes(search.value.toLocaleLowerCase())
-        );
       tempPeers = tempPeers.sort((a, b) => (a.Rx >= b.Rx ? -1 : 1));
       for (let i = 0; i < tempPeers.length; i++) {
         tRx += tempPeers[i].Rx;
@@ -78,7 +74,7 @@ export default component$(() => {
       }
     }, 1000);
   });
-  return peers.value.length || search.value !== "" ? (
+  return peers.value.length ? (
     <>
       {isAdmin.value && (
         <div class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-900">
@@ -182,13 +178,11 @@ export default component$(() => {
       )}
       <div class="max-w-[768px] flex flex-col justify-center mx-4 md:mx-auto">
         {isAdmin.value && (
-          <>
-            <input
-              bind:value={search}
-              type="text"
-              class="px-2 py-1 rounded text-black"
-            />
-          </>
+          <input
+            bind:value={search}
+            type="text"
+            class="px-2 py-1 rounded text-black"
+          />
         )}
         {showGroupView.value
           ? Object.values(groups.value)
@@ -326,93 +320,97 @@ export default component$(() => {
                   ))}
                 </div>
               ))
-          : peers.value.map((u, i) => (
-              <div
-                key={i}
-                class="bg-slate-900 border-2 border-slate-800 rounded my-4 px-2 py-1"
-              >
-                <div class="flex items-center justify-between border-b-[1px] border-slate-800 pb-1.5">
-                  <span class="truncate">
-                    {i + 1}. {u.Name}
-                  </span>
-                  <div class="flex my-2 text-green-500">
-                    <div class="flex items-center">
-                      <img
-                        src="download.png"
-                        alt="download icon"
-                        class="invert w-4 h-4 md:w-6 md:h-6"
-                      />
-                      {(u.Rx / 1000000000).toFixed(2)} GiB
-                    </div>
-                    <div class="border-l-2 border-slate-800 pl-0.5 ml-1 flex items-center">
-                      <img
-                        src="upload.png"
-                        alt="upload icon"
-                        class="invert w-4 h-4 md:w-6 md:h-6"
-                      />
-                      {(u.Tx / 1000000000).toFixed(2)} GiB
+          : peers.value
+              .filter((p) =>
+                p.Name.toLowerCase().includes(search.value.toLocaleLowerCase())
+              )
+              .map((u, i) => (
+                <div
+                  key={i}
+                  class="bg-slate-900 border-2 border-slate-800 rounded my-4 px-2 py-1"
+                >
+                  <div class="flex items-center justify-between border-b-[1px] border-slate-800 pb-1.5">
+                    <span class="truncate">
+                      {i + 1}. {u.Name}
+                    </span>
+                    <div class="flex my-2 text-green-500">
+                      <div class="flex items-center">
+                        <img
+                          src="download.png"
+                          alt="download icon"
+                          class="invert w-4 h-4 md:w-6 md:h-6"
+                        />
+                        {(u.Rx / 1000000000).toFixed(2)} GiB
+                      </div>
+                      <div class="border-l-2 border-slate-800 pl-0.5 ml-1 flex items-center">
+                        <img
+                          src="upload.png"
+                          alt="upload icon"
+                          class="invert w-4 h-4 md:w-6 md:h-6"
+                        />
+                        {(u.Tx / 1000000000).toFixed(2)} GiB
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div class="mt-3 mb-1 tracking-tighter truncate text-blue-500">
-                  <span class="text-white">Latest Handshake: </span>
-                  <div class="mb-2 pb-2 border-b-[1px] border-slate-800">
-                    {formatTime(u.LatestHandshake)}
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <div>
-                      <span class="text-white">Expires In: </span>
-                      <span
-                        title={new Date(
-                          u.ExpiresAt * 1000
-                        ).toLocaleDateString()}
+                  <div class="mt-3 mb-1 tracking-tighter truncate text-blue-500">
+                    <span class="text-white">Latest Handshake: </span>
+                    <div class="mb-2 pb-2 border-b-[1px] border-slate-800">
+                      {formatTime(u.LatestHandshake)}
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <div>
+                        <span class="text-white">Expires In: </span>
+                        <span
+                          title={new Date(
+                            u.ExpiresAt * 1000
+                          ).toLocaleDateString()}
+                        >
+                          {u.ExpiresAt
+                            ? Math.ceil(
+                                (u.ExpiresAt - Date.now() / 1000) / 60 / 60 / 24
+                              )
+                            : "?"}{" "}
+                          days
+                        </span>
+                      </div>
+                      <div
+                        class={`${
+                          isAdmin.value ? "flex" : "hidden"
+                        } items-center`}
                       >
-                        {u.ExpiresAt
-                          ? Math.ceil(
-                              (u.ExpiresAt - Date.now() / 1000) / 60 / 60 / 24
-                            )
-                          : "?"}{" "}
-                        days
-                      </span>
-                    </div>
-                    <div
-                      class={`${
-                        isAdmin.value ? "flex" : "hidden"
-                      } items-center`}
-                    >
-                      <img
-                        onClick$={() =>
-                          fetch("http://my.stats:5051/api", {
-                            method: "POST",
-                            body: JSON.stringify({
-                              Name: u.Name,
-                              ExpiresAt: u.ExpiresAt + 24 * 3600,
-                            }),
-                          })
-                        }
-                        src="add.png"
-                        alt="add icon"
-                        class="mr-4 invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
-                      />
-                      <img
-                        onClick$={() =>
-                          fetch("http://my.stats:5051/api", {
-                            method: "POST",
-                            body: JSON.stringify({
-                              Name: u.Name,
-                              ExpiresAt: u.ExpiresAt - 24 * 3600,
-                            }),
-                          })
-                        }
-                        src="remove.png"
-                        alt="remove icon"
-                        class="invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
-                      />
+                        <img
+                          onClick$={() =>
+                            fetch("http://my.stats:5051/api", {
+                              method: "POST",
+                              body: JSON.stringify({
+                                Name: u.Name,
+                                ExpiresAt: u.ExpiresAt + 24 * 3600,
+                              }),
+                            })
+                          }
+                          src="add.png"
+                          alt="add icon"
+                          class="mr-4 invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                        />
+                        <img
+                          onClick$={() =>
+                            fetch("http://my.stats:5051/api", {
+                              method: "POST",
+                              body: JSON.stringify({
+                                Name: u.Name,
+                                ExpiresAt: u.ExpiresAt - 24 * 3600,
+                              }),
+                            })
+                          }
+                          src="remove.png"
+                          alt="remove icon"
+                          class="invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
       </div>
     </>
   ) : (
