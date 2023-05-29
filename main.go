@@ -44,10 +44,10 @@ func updatePeersInfo() {
 	peerLines := strings.Split(strings.TrimSpace(string(bytes)), "\n")[1:]
 	for _, p := range peerLines { // the first line is interface info
 		info := strings.Split(p, "\t")
-		peers[info[0]].exists = true
 		if _, ok := peers[info[0]]; !ok {
 			peers[info[0]] = &Peer{}
 		}
+		peers[info[0]].exists = true
 		newTotalTx, _ := strconv.ParseUint(string(info[5]), 10, 64)
 		newTotalRx, _ := strconv.ParseUint(string(info[6]), 10, 64)
 		peers[info[0]].CurrentRx = newTotalRx - peers[info[0]].TotalRx
