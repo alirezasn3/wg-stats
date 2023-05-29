@@ -29,8 +29,6 @@ export default component$(() => {
   const showGroupView = useSignal(false);
   const sortByUsage = useSignal(true);
 
-  const location = useLocation();
-
   useVisibleTask$(() => {
     setInterval(async () => {
       const res = await fetch("/api");
