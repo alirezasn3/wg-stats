@@ -78,7 +78,7 @@ export default component$(() => {
       }
     }, 1000);
   });
-  return peers.value.length ? (
+  return peers.value.length || search.value !== "" ? (
     <>
       {isAdmin.value && (
         <div class="mx-2 my-4 pb-2 px-2 border-b-2 border-slate-900">
