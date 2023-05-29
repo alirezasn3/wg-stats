@@ -129,7 +129,7 @@ export default component$(() => {
               </span>
             )}
           </div>
-          <div class="flex md:hidden justify-between mt-4 text-xs">
+          <div class="flex md:hidden justify-between mt-4">
             <div class="flex items-center text-green-500">
               <div class="flex items-center">
                 <img

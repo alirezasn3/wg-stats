@@ -100,7 +100,7 @@ func findPeerPublicKeyByName(name string) string {
 
 func init() {
 	updatePeersInfo()
-	_, err := os.Stat("/path/to/whatever")
+	_, err := os.Stat("db.json")
 	if errors.Is(err, os.ErrNotExist) {
 		f, _ := os.Create("db.json")
 		f.Close()
