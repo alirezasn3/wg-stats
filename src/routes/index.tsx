@@ -8,6 +8,7 @@ interface Peer {
   LatestHandshake: number;
   AllowedIps: string;
   ExpiresAt: number;
+  CurrentRx: number;
 }
 
 async function sleep(ms: number) {
@@ -36,6 +37,7 @@ function formatTime(totalSeconds: number) {
 export default component$(() => {
   const search = useSignal("");
   const peers = useSignal<Peer[]>([]);
+  const lastKnownRxTable = useSignal<{ [key: string]: number }>({});
   const groups = useSignal<{ [key: string]: Peer[] }>({});
   const totalRx = useSignal(0);
   const totalTx = useSignal(0);
@@ -58,6 +60,10 @@ export default component$(() => {
         const groupName = tempPeers[i].Name.split("-")[0];
         if (groups.value[groupName]) groups.value[groupName].push(tempPeers[i]);
         else groups.value[groupName] = [tempPeers[i]];
+        tempPeers[i].CurrentRx = Math.floor(
+          (tempPeers[i].Rx - lastKnownRxTable.value[tempPeers[i].Name]) / 1024
+        );
+        lastKnownRxTable.value[tempPeers[i].Name] = tempPeers[i].Rx;
       }
       totalRx.value = tRx;
       totalTx.value = tTx;
@@ -82,7 +88,7 @@ export default component$(() => {
             <div class="flex items-center">
               <img
                 onClick$={() => (showGroupView.value = !showGroupView.value)}
-                class="w-6 md:w-8 invert rounded-full hover:cursor-pointer"
+                class="h-4 w-4 md:h-6 md:w-6 invert rounded-full hover:cursor-pointer"
                 src={showGroupView.value ? "ungroup.png" : "group.png"}
                 alt="group icon"
               />
@@ -92,7 +98,7 @@ export default component$(() => {
                 <img
                   src="download.png"
                   alt="download icon"
-                  class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
+                  class="invert h-4 w-4 md:h-6 md:w-6 pr-0.5"
                 />
                 {(currentRx.value / 8000000).toFixed(2)} MiB
               </div>
@@ -100,7 +106,7 @@ export default component$(() => {
                 <img
                   src="upload.png"
                   alt="upload icon"
-                  class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
+                  class="invert h-4 w-4 md:h-6 md:w-6 pr-0.5"
                 />
                 {(currentTx.value / 8000000).toFixed(2)} MiB
               </div>
@@ -110,7 +116,7 @@ export default component$(() => {
                 <img
                   src="download.png"
                   alt="download icon"
-                  class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
+                  class="invert h-4 w-4 md:h-6 md:w-6 pr-0.5"
                 />
                 {(totalRx.value / 1000000000).toFixed(2)} GiB
               </div>
@@ -177,7 +183,7 @@ export default component$(() => {
         </div>
       )}
       <div class="max-w-[768px] flex flex-col justify-center mx-4 md:mx-auto">
-        {isAdmin.value && (
+        {isAdmin.value && !showGroupView.value && (
           <input
             bind:value={search}
             type="text"
@@ -230,14 +236,23 @@ export default component$(() => {
                   </div>
                   {g.map((u, i) => (
                     <div
-                      key={u.Name + i}
-                      class="bg-slate-800 my-2 px-2 py-1 rounded"
+                      key={i}
+                      class="bg-slate-800 border-2 border-slate-800 rounded my-4 px-2 py-1"
                     >
-                      <div class="flex items-center justify-between border-b-[1px] border-slate-700 pb-1.5">
-                        <span class="truncate">
-                          {i + 1}. {u.Name}
-                        </span>
-                        <div class="flex my-2 text-green-500">
+                      <div class="">
+                        {i + 1}. {u.Name}
+                      </div>
+                      <div class="w-full h-[1px] bg-slate-700 my-2"></div>
+                      <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                          <img
+                            src="download.png"
+                            alt="download icon"
+                            class="invert w-4 h-4 md:w-6 md:h-6"
+                          />
+                          <span class="text-green-500">{u.CurrentRx} KB/s</span>
+                        </div>
+                        <div class="flex text-green-500 items-center">
                           <div class="flex items-center">
                             <img
                               src="download.png"
@@ -246,7 +261,7 @@ export default component$(() => {
                             />
                             {(u.Rx / 1000000000).toFixed(2)} GiB
                           </div>
-                          <div class="border-l-2 pl-0.5 ml-1 border-slate-700 flex items-center">
+                          <div class="border-l-2 border-slate-700 pl-0.5 ml-1 flex items-center">
                             <img
                               src="upload.png"
                               alt="upload icon"
@@ -256,64 +271,64 @@ export default component$(() => {
                           </div>
                         </div>
                       </div>
-                      <div class="mt-3 mb-1 tracking-tighter truncate text-blue-500">
+                      <div class="w-full h-[1px] bg-slate-700 my-2"></div>
+                      <div class="truncate text-blue-500">
                         <span class="text-white">Latest Handshake: </span>
-                        <div class="mb-2 pb-2 border-b-[1px] border-slate-700">
-                          {formatTime(u.LatestHandshake)}
-                        </div>
-                        <div class="flex justify-between items-center">
-                          <div>
-                            <span class="text-white">Expires In: </span>
-                            <span
-                              title={new Date(
-                                u.ExpiresAt * 1000
-                              ).toLocaleDateString()}
-                            >
-                              {u.ExpiresAt
-                                ? Math.ceil(
-                                    (u.ExpiresAt - Date.now() / 1000) /
-                                      60 /
-                                      60 /
-                                      24
-                                  )
-                                : "?"}{" "}
-                              days
-                            </span>
-                          </div>
-                          <div
-                            class={`${
-                              isAdmin.value ? "flex" : "hidden"
-                            } items-center`}
+                        <div class="">{formatTime(u.LatestHandshake)}</div>
+                      </div>
+                      <div class="w-full h-[1px] bg-slate-700 my-2"></div>
+                      <div class="flex justify-between items-center">
+                        <div>
+                          <span class="text-white">Expires In: </span>
+                          <span
+                            title={new Date(
+                              u.ExpiresAt * 1000
+                            ).toLocaleDateString()}
                           >
-                            <img
-                              onClick$={() =>
-                                fetch("http://my.stats:5051/api", {
-                                  method: "POST",
-                                  body: JSON.stringify({
-                                    Name: u.Name,
-                                    ExpiresAt: u.ExpiresAt + 24 * 3600,
-                                  }),
-                                })
-                              }
-                              src="add.png"
-                              alt="add icon"
-                              class="mr-4 invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
-                            />
-                            <img
-                              onClick$={() =>
-                                fetch("http://my.stats:5051/api", {
-                                  method: "POST",
-                                  body: JSON.stringify({
-                                    Name: u.Name,
-                                    ExpiresAt: u.ExpiresAt - 24 * 3600,
-                                  }),
-                                })
-                              }
-                              src="remove.png"
-                              alt="remove icon"
-                              class="invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
-                            />
-                          </div>
+                            {u.ExpiresAt
+                              ? Math.ceil(
+                                  (u.ExpiresAt - Date.now() / 1000) /
+                                    60 /
+                                    60 /
+                                    24
+                                )
+                              : "?"}{" "}
+                            days
+                          </span>
+                        </div>
+                        <div
+                          class={`${
+                            isAdmin.value ? "flex" : "hidden"
+                          } items-center`}
+                        >
+                          <img
+                            onClick$={() =>
+                              fetch("http://my.stats:5051/api", {
+                                method: "POST",
+                                body: JSON.stringify({
+                                  Name: u.Name,
+                                  ExpiresAt: u.ExpiresAt + 24 * 3600,
+                                }),
+                              })
+                            }
+                            src="add.png"
+                            alt="add icon"
+                            class="mr-4 invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                          />
+                          <img
+                            onClick$={() =>
+                              fetch("http://my.stats:5051/api", {
+                                method: "POST",
+                                body: JSON.stringify({
+                                  Name: u.Name,
+                                  ExpiresAt: u.ExpiresAt - 24 * 3600,
+                                }),
+                              })
+                            }
+                            src="remove.png"
+                            alt="remove icon"
+                            class="invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                          />
                         </div>
                       </div>
                     </div>
@@ -329,11 +344,20 @@ export default component$(() => {
                   key={i}
                   class="bg-slate-900 border-2 border-slate-800 rounded my-4 px-2 py-1"
                 >
-                  <div class="flex items-center justify-between border-b-[1px] border-slate-800 pb-1.5">
-                    <span class="truncate">
-                      {i + 1}. {u.Name}
-                    </span>
-                    <div class="flex my-2 text-green-500">
+                  <div class="">
+                    {i + 1}. {u.Name}
+                  </div>
+                  <div class="w-full h-[1px] bg-slate-800 my-2"></div>
+                  <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                      <img
+                        src="download.png"
+                        alt="download icon"
+                        class="invert w-4 h-4 md:w-6 md:h-6"
+                      />
+                      <span class="text-green-500">{u.CurrentRx} KB/s</span>
+                    </div>
+                    <div class="flex text-green-500 items-center">
                       <div class="flex items-center">
                         <img
                           src="download.png"
@@ -352,61 +376,61 @@ export default component$(() => {
                       </div>
                     </div>
                   </div>
-                  <div class="mt-3 mb-1 tracking-tighter truncate text-blue-500">
+                  <div class="w-full h-[1px] bg-slate-800 my-2"></div>
+                  <div class="truncate text-blue-500">
                     <span class="text-white">Latest Handshake: </span>
-                    <div class="mb-2 pb-2 border-b-[1px] border-slate-800">
-                      {formatTime(u.LatestHandshake)}
-                    </div>
-                    <div class="flex justify-between items-center">
-                      <div>
-                        <span class="text-white">Expires In: </span>
-                        <span
-                          title={new Date(
-                            u.ExpiresAt * 1000
-                          ).toLocaleDateString()}
-                        >
-                          {u.ExpiresAt
-                            ? Math.ceil(
-                                (u.ExpiresAt - Date.now() / 1000) / 60 / 60 / 24
-                              )
-                            : "?"}{" "}
-                          days
-                        </span>
-                      </div>
-                      <div
-                        class={`${
-                          isAdmin.value ? "flex" : "hidden"
-                        } items-center`}
+                    <div class="">{formatTime(u.LatestHandshake)}</div>
+                  </div>
+                  <div class="w-full h-[1px] bg-slate-800 my-2"></div>
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <span class="text-white">Expires In: </span>
+                      <span
+                        title={new Date(
+                          u.ExpiresAt * 1000
+                        ).toLocaleDateString()}
                       >
-                        <img
-                          onClick$={() =>
-                            fetch("http://my.stats:5051/api", {
-                              method: "POST",
-                              body: JSON.stringify({
-                                Name: u.Name,
-                                ExpiresAt: u.ExpiresAt + 24 * 3600,
-                              }),
-                            })
-                          }
-                          src="add.png"
-                          alt="add icon"
-                          class="mr-4 invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
-                        />
-                        <img
-                          onClick$={() =>
-                            fetch("http://my.stats:5051/api", {
-                              method: "POST",
-                              body: JSON.stringify({
-                                Name: u.Name,
-                                ExpiresAt: u.ExpiresAt - 24 * 3600,
-                              }),
-                            })
-                          }
-                          src="remove.png"
-                          alt="remove icon"
-                          class="invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
-                        />
-                      </div>
+                        {u.ExpiresAt
+                          ? Math.ceil(
+                              (u.ExpiresAt - Date.now() / 1000) / 60 / 60 / 24
+                            )
+                          : "?"}{" "}
+                        days
+                      </span>
+                    </div>
+                    <div
+                      class={`${
+                        isAdmin.value ? "flex" : "hidden"
+                      } items-center`}
+                    >
+                      <img
+                        onClick$={() =>
+                          fetch("http://my.stats:5051/api", {
+                            method: "POST",
+                            body: JSON.stringify({
+                              Name: u.Name,
+                              ExpiresAt: u.ExpiresAt + 24 * 3600,
+                            }),
+                          })
+                        }
+                        src="add.png"
+                        alt="add icon"
+                        class="mr-4 invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                      />
+                      <img
+                        onClick$={() =>
+                          fetch("http://my.stats:5051/api", {
+                            method: "POST",
+                            body: JSON.stringify({
+                              Name: u.Name,
+                              ExpiresAt: u.ExpiresAt - 24 * 3600,
+                            }),
+                          })
+                        }
+                        src="remove.png"
+                        alt="remove icon"
+                        class="invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                      />
                     </div>
                   </div>
                 </div>
