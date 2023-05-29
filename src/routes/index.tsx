@@ -1,5 +1,5 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
-import { DocumentHead, useLocation } from "@builder.io/qwik-city";
+import { DocumentHead } from "@builder.io/qwik-city";
 import Peer from "~/components/peer/peer";
 
 interface Peer {
