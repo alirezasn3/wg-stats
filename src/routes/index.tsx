@@ -34,6 +34,7 @@ function formatTime(totalSeconds: number) {
 }
 
 export default component$(() => {
+  const search = useSignal("");
   const peers = useSignal<Peer[]>([]);
   const groups = useSignal<{ [key: string]: Peer[] }>({});
   const totalRx = useSignal(0);
@@ -50,6 +51,10 @@ export default component$(() => {
       let tTx = 0;
       Object.keys(groups.value).forEach((gn) => (groups.value[gn].length = 0));
       let tempPeers: Peer[] = Object.values(data.Peers);
+      if (search.value !== "")
+        tempPeers = tempPeers.filter((p) =>
+          p.Name.toLowerCase().includes(search.value.toLocaleLowerCase())
+        );
       tempPeers = tempPeers.sort((a, b) => (a.Rx >= b.Rx ? -1 : 1));
       for (let i = 0; i < tempPeers.length; i++) {
         tRx += tempPeers[i].Rx;
@@ -175,225 +180,240 @@ export default component$(() => {
           </div>
         </div>
       )}
-      {showGroupView.value
-        ? Object.values(groups.value)
-            .sort((a, b) => {
-              const aRx = a.reduce((partialSum, a) => partialSum + a.Rx, 0);
-              const bRx = b.reduce((partialSum, a) => partialSum + a.Rx, 0);
-              return aRx >= bRx ? -1 : 1;
-            })
-            .map((g, j) => (
+      <div class="max-w-[768px] flex flex-col justify-center mx-4 md:mx-auto">
+        {isAdmin.value && (
+          <>
+            <input
+              bind:value={search}
+              type="text"
+              class="px-2 py-1 rounded text-black"
+            />
+          </>
+        )}
+        {showGroupView.value
+          ? Object.values(groups.value)
+              .sort((a, b) => {
+                const aRx = a.reduce((partialSum, a) => partialSum + a.Rx, 0);
+                const bRx = b.reduce((partialSum, a) => partialSum + a.Rx, 0);
+                return aRx >= bRx ? -1 : 1;
+              })
+              .map((g, j) => (
+                <div
+                  key={g[0].Name}
+                  class="bg-slate-900 border-2 border-slate-800 rounded my-4 px-2 py-1"
+                >
+                  <span class="text-orange-500">
+                    {j + 1}. {g[0].Name.split("-")[0]}
+                  </span>
+                  <div class="flex items-center justify-between py-2 mb-4 border-b-2 border-slate-800">
+                    <span>Total Usage:</span>
+                    <div class="flex my-2 text-green-500">
+                      <div class="flex items-center">
+                        <img
+                          src="download.png"
+                          alt="download icon"
+                          class="invert w-6 h-6"
+                        />
+                        {(
+                          g.reduce((partialSum, a) => partialSum + a.Rx, 0) /
+                          1000000000
+                        ).toFixed(2)}{" "}
+                        GiB
+                      </div>
+                      <div class="border-l-2 pl-0.5 ml-1 border-slate-800 flex items-center">
+                        <img
+                          src="upload.png"
+                          alt="upload icon"
+                          class="invert w-6 h-6"
+                        />
+                        {(
+                          g.reduce((partialSum, a) => partialSum + a.Tx, 0) /
+                          1000000000
+                        ).toFixed(2)}{" "}
+                        GiB
+                      </div>
+                    </div>
+                  </div>
+                  {g.map((u, i) => (
+                    <div
+                      key={u.Name + i}
+                      class="bg-slate-800 my-2 px-2 py-1 rounded"
+                    >
+                      <div class="flex items-center justify-between border-b-[1px] border-slate-700 pb-1.5">
+                        <span class="truncate">
+                          {i + 1}. {u.Name}
+                        </span>
+                        <div class="flex my-2 text-green-500">
+                          <div class="flex items-center">
+                            <img
+                              src="download.png"
+                              alt="download icon"
+                              class="invert w-4 h-4 md:w-6 md:h-6"
+                            />
+                            {(u.Rx / 1000000000).toFixed(2)} GiB
+                          </div>
+                          <div class="border-l-2 pl-0.5 ml-1 border-slate-700 flex items-center">
+                            <img
+                              src="upload.png"
+                              alt="upload icon"
+                              class="invert w-4 h-4 md:w-6 md:h-6"
+                            />
+                            {(u.Tx / 1000000000).toFixed(2)} GiB
+                          </div>
+                        </div>
+                      </div>
+                      <div class="mt-3 mb-1 tracking-tighter truncate text-blue-500">
+                        <span class="text-white">Latest Handshake: </span>
+                        <div class="mb-2 pb-2 border-b-[1px] border-slate-700">
+                          {formatTime(u.LatestHandshake)}
+                        </div>
+                        <div class="flex justify-between items-center">
+                          <div>
+                            <span class="text-white">Expires In: </span>
+                            <span
+                              title={new Date(
+                                u.ExpiresAt * 1000
+                              ).toLocaleDateString()}
+                            >
+                              {u.ExpiresAt
+                                ? Math.ceil(
+                                    (u.ExpiresAt - Date.now() / 1000) /
+                                      60 /
+                                      60 /
+                                      24
+                                  )
+                                : "?"}{" "}
+                              days
+                            </span>
+                          </div>
+                          <div
+                            class={`${
+                              isAdmin.value ? "flex" : "hidden"
+                            } items-center`}
+                          >
+                            <img
+                              onClick$={() =>
+                                fetch("http://my.stats:5051/api", {
+                                  method: "POST",
+                                  body: JSON.stringify({
+                                    Name: u.Name,
+                                    ExpiresAt: u.ExpiresAt + 24 * 3600,
+                                  }),
+                                })
+                              }
+                              src="add.png"
+                              alt="add icon"
+                              class="mr-4 invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                            />
+                            <img
+                              onClick$={() =>
+                                fetch("http://my.stats:5051/api", {
+                                  method: "POST",
+                                  body: JSON.stringify({
+                                    Name: u.Name,
+                                    ExpiresAt: u.ExpiresAt - 24 * 3600,
+                                  }),
+                                })
+                              }
+                              src="remove.png"
+                              alt="remove icon"
+                              class="invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))
+          : peers.value.map((u, i) => (
               <div
-                key={g[0].Name}
-                class="bg-slate-900 border-2 border-slate-800 rounded mx-2 my-4 px-2 py-1"
+                key={i}
+                class="bg-slate-900 border-2 border-slate-800 rounded my-4 px-2 py-1"
               >
-                <span class="text-orange-500">
-                  {j + 1}. {g[0].Name.split("-")[0]}
-                </span>
-                <div class="flex items-center justify-between py-2 mb-4 border-b-2 border-slate-800">
-                  <span>Total Usage:</span>
+                <div class="flex items-center justify-between border-b-[1px] border-slate-800 pb-1.5">
+                  <span class="truncate">
+                    {i + 1}. {u.Name}
+                  </span>
                   <div class="flex my-2 text-green-500">
                     <div class="flex items-center">
                       <img
                         src="download.png"
                         alt="download icon"
-                        class="invert w-6 h-6"
+                        class="invert w-4 h-4 md:w-6 md:h-6"
                       />
-                      {(
-                        g.reduce((partialSum, a) => partialSum + a.Rx, 0) /
-                        1000000000
-                      ).toFixed(2)}{" "}
-                      GiB
+                      {(u.Rx / 1000000000).toFixed(2)} GiB
                     </div>
-                    <div class="border-l-2 pl-0.5 ml-1 border-slate-800 flex items-center">
+                    <div class="border-l-2 border-slate-800 pl-0.5 ml-1 flex items-center">
                       <img
                         src="upload.png"
                         alt="upload icon"
-                        class="invert w-6 h-6"
+                        class="invert w-4 h-4 md:w-6 md:h-6"
                       />
-                      {(
-                        g.reduce((partialSum, a) => partialSum + a.Tx, 0) /
-                        1000000000
-                      ).toFixed(2)}{" "}
-                      GiB
+                      {(u.Tx / 1000000000).toFixed(2)} GiB
                     </div>
                   </div>
                 </div>
-                {g.map((u, i) => (
-                  <div
-                    key={u.Name + i}
-                    class="bg-slate-800 my-2 px-2 py-1 rounded"
-                  >
-                    <div class="flex items-center justify-between border-b-[1px] border-slate-700 pb-1.5">
-                      <span class="truncate">
-                        {i + 1}. {u.Name}
+                <div class="mt-3 mb-1 tracking-tighter truncate text-blue-500">
+                  <span class="text-white">Latest Handshake: </span>
+                  <div class="mb-2 pb-2 border-b-[1px] border-slate-800">
+                    {formatTime(u.LatestHandshake)}
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <span class="text-white">Expires In: </span>
+                      <span
+                        title={new Date(
+                          u.ExpiresAt * 1000
+                        ).toLocaleDateString()}
+                      >
+                        {u.ExpiresAt
+                          ? Math.ceil(
+                              (u.ExpiresAt - Date.now() / 1000) / 60 / 60 / 24
+                            )
+                          : "?"}{" "}
+                        days
                       </span>
-                      <div class="flex my-2 text-green-500">
-                        <div class="flex items-center">
-                          <img
-                            src="download.png"
-                            alt="download icon"
-                            class="invert w-4 h-4 md:w-6 md:h-6"
-                          />
-                          {(u.Rx / 1000000000).toFixed(2)} GiB
-                        </div>
-                        <div class="border-l-2 pl-0.5 ml-1 border-slate-700 flex items-center">
-                          <img
-                            src="upload.png"
-                            alt="upload icon"
-                            class="invert w-4 h-4 md:w-6 md:h-6"
-                          />
-                          {(u.Tx / 1000000000).toFixed(2)} GiB
-                        </div>
-                      </div>
                     </div>
-                    <div class="mt-3 mb-1 tracking-tighter truncate text-blue-500">
-                      <span class="text-white">Latest Handshake: </span>
-                      <div class="mb-2 pb-2 border-b-[1px] border-slate-700">
-                        {formatTime(u.LatestHandshake)}
-                      </div>
-                      <div class="flex justify-between items-center">
-                        <div>
-                          <span class="text-white">Expires In: </span>
-                          <span
-                            title={new Date(
-                              u.ExpiresAt * 1000
-                            ).toLocaleDateString()}
-                          >
-                            {u.ExpiresAt
-                              ? Math.ceil(
-                                  (u.ExpiresAt - Date.now() / 1000) /
-                                    60 /
-                                    60 /
-                                    24
-                                )
-                              : "?"}{" "}
-                            days
-                          </span>
-                        </div>
-                        <div
-                          class={`${
-                            isAdmin.value ? "flex" : "hidden"
-                          } items-center`}
-                        >
-                          <img
-                            onClick$={() =>
-                              fetch("http://my.stats:5051/api", {
-                                method: "POST",
-                                body: JSON.stringify({
-                                  Name: u.Name,
-                                  ExpiresAt: u.ExpiresAt + 24 * 3600,
-                                }),
-                              })
-                            }
-                            src="add.png"
-                            alt="add icon"
-                            class="mr-4 invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
-                          />
-                          <img
-                            onClick$={() =>
-                              fetch("http://my.stats:5051/api", {
-                                method: "POST",
-                                body: JSON.stringify({
-                                  Name: u.Name,
-                                  ExpiresAt: u.ExpiresAt - 24 * 3600,
-                                }),
-                              })
-                            }
-                            src="remove.png"
-                            alt="remove icon"
-                            class="invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))
-        : peers.value.map((u, i) => (
-            <div
-              key={i}
-              class="bg-slate-900 border-2 border-slate-800 rounded mx-2 my-4 px-2 py-1"
-            >
-              <div class="flex items-center justify-between border-b-[1px] border-slate-800 pb-1.5">
-                <span class="truncate">
-                  {i + 1}. {u.Name}
-                </span>
-                <div class="flex my-2 text-green-500">
-                  <div class="flex items-center">
-                    <img
-                      src="download.png"
-                      alt="download icon"
-                      class="invert w-4 h-4 md:w-6 md:h-6"
-                    />
-                    {(u.Rx / 1000000000).toFixed(2)} GiB
-                  </div>
-                  <div class="border-l-2 border-slate-800 pl-0.5 ml-1 flex items-center">
-                    <img
-                      src="upload.png"
-                      alt="upload icon"
-                      class="invert w-4 h-4 md:w-6 md:h-6"
-                    />
-                    {(u.Tx / 1000000000).toFixed(2)} GiB
-                  </div>
-                </div>
-              </div>
-              <div class="mt-3 mb-1 tracking-tighter truncate text-blue-500">
-                <span class="text-white">Latest Handshake: </span>
-                <div class="mb-2 pb-2 border-b-[1px] border-slate-800">
-                  {formatTime(u.LatestHandshake)}
-                </div>
-                <div class="flex justify-between items-center">
-                  <div>
-                    <span class="text-white">Expires In: </span>
-                    <span
-                      title={new Date(u.ExpiresAt * 1000).toLocaleDateString()}
+                    <div
+                      class={`${
+                        isAdmin.value ? "flex" : "hidden"
+                      } items-center`}
                     >
-                      {u.ExpiresAt
-                        ? Math.ceil(
-                            (u.ExpiresAt - Date.now() / 1000) / 60 / 60 / 24
-                          )
-                        : "?"}{" "}
-                      days
-                    </span>
-                  </div>
-                  <div
-                    class={`${isAdmin.value ? "flex" : "hidden"} items-center`}
-                  >
-                    <img
-                      onClick$={() =>
-                        fetch("http://my.stats:5051/api", {
-                          method: "POST",
-                          body: JSON.stringify({
-                            Name: u.Name,
-                            ExpiresAt: u.ExpiresAt + 24 * 3600,
-                          }),
-                        })
-                      }
-                      src="add.png"
-                      alt="add icon"
-                      class="mr-4 invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
-                    />
-                    <img
-                      onClick$={() =>
-                        fetch("http://my.stats:5051/api", {
-                          method: "POST",
-                          body: JSON.stringify({
-                            Name: u.Name,
-                            ExpiresAt: u.ExpiresAt - 24 * 3600,
-                          }),
-                        })
-                      }
-                      src="remove.png"
-                      alt="remove icon"
-                      class="invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
-                    />
+                      <img
+                        onClick$={() =>
+                          fetch("http://my.stats:5051/api", {
+                            method: "POST",
+                            body: JSON.stringify({
+                              Name: u.Name,
+                              ExpiresAt: u.ExpiresAt + 24 * 3600,
+                            }),
+                          })
+                        }
+                        src="add.png"
+                        alt="add icon"
+                        class="mr-4 invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                      />
+                      <img
+                        onClick$={() =>
+                          fetch("http://my.stats:5051/api", {
+                            method: "POST",
+                            body: JSON.stringify({
+                              Name: u.Name,
+                              ExpiresAt: u.ExpiresAt - 24 * 3600,
+                            }),
+                          })
+                        }
+                        src="remove.png"
+                        alt="remove icon"
+                        class="invert w-6 h-6 md:w-8 md:h-8 border-black border-2 rounded-full hover:cursor-pointer"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+      </div>
     </>
   ) : (
     <div class="flex items-center justify-center h-[100vh]">Loading...</div>
