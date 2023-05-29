@@ -64,7 +64,7 @@ export default component$(() => {
             <div class="flex items-center">
               <img
                 onClick$={() => (showGroupView.value = !showGroupView.value)}
-                class="h-4 w-4 md:h-8 md:w-8 invert rounded-full hover:cursor-pointer"
+                class="h-6 w-6 md:h-8 md:w-8 invert rounded-full hover:cursor-pointer"
                 src={showGroupView.value ? "ungroup.png" : "group.png"}
                 alt="group icon"
               />
@@ -73,7 +73,7 @@ export default component$(() => {
                   <div class="h-4 md:h-8 bg-slate-900 w-0.5 ml-1 mr-1.5" />
                   <img
                     onClick$={() => (sortByUsage.value = !sortByUsage.value)}
-                    class="h-4 w-4 md:h-8 md:w-8 invert rounded-full hover:cursor-pointer"
+                    class="h-6 w-6 md:h-8 md:w-8 invert rounded-full hover:cursor-pointer"
                     src="sort.png"
                     alt="sort icon"
                   />
@@ -180,15 +180,10 @@ export default component$(() => {
         {showGroupView.value
           ? Object.values(groups.value)
               .sort((a, b) => {
-                const aRx = a.reduce(
-                  (partialSum, a) => partialSum + a.totalRx,
-                  0
-                );
-                const bRx = b.reduce(
-                  (partialSum, a) => partialSum + a.totalTx,
-                  0
-                );
-                return aRx >= bRx ? -1 : 1;
+                return a.reduce((sum, p) => sum + p.totalRx, 0) >=
+                  b.reduce((sum, p) => sum + p.totalRx, 0)
+                  ? -1
+                  : 1;
               })
               .map((g, j) => (
                 <div
@@ -208,10 +203,7 @@ export default component$(() => {
                           class="invert w-6 h-6"
                         />
                         {(
-                          g.reduce(
-                            (partialSum, a) => partialSum + a.totalRx,
-                            0
-                          ) / 1000000000
+                          g.reduce((sum, p) => sum + p.totalRx, 0) / 1000000000
                         ).toFixed(2)}{" "}
                         GiB
                       </div>
@@ -222,18 +214,17 @@ export default component$(() => {
                           class="invert w-6 h-6"
                         />
                         {(
-                          g.reduce(
-                            (partialSum, a) => partialSum + a.totalTx,
-                            0
-                          ) / 1000000000
+                          g.reduce((sum, p) => sum + p.totalTx, 0) / 1000000000
                         ).toFixed(2)}{" "}
                         GiB
                       </div>
                     </div>
                   </div>
-                  {g.map((p, i) => (
-                    <Peer {...p} index={i} isAdmin={isAdmin.value} />
-                  ))}
+                  {g
+                    .sort((a, b) => (a.totalRx >= b.totalRx ? -1 : 1))
+                    .map((p, i) => (
+                      <Peer {...p} index={i} isAdmin={isAdmin.value} />
+                    ))}
                 </div>
               ))
           : peers.value
