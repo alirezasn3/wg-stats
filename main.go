@@ -28,6 +28,7 @@ type Peer struct {
 	CurrentRx       uint64 `json:"currentRx"`
 	CurrentTx       uint64 `json:"currentTx"`
 	ExpiresAt       uint64 `json:"expiresAt"`
+	exists          bool
 }
 
 func updatePeersInfo() {
@@ -40,8 +41,10 @@ func updatePeersInfo() {
 	var tempCurrentTx uint64 = 0
 	var tempTotalRx uint64 = 0
 	var tempTotalTx uint64 = 0
-	for _, p := range strings.Split(strings.TrimSpace(string(bytes)), "\n")[1:] { // the first line is interface info
+	peerLines := strings.Split(strings.TrimSpace(string(bytes)), "\n")[1:]
+	for _, p := range peerLines { // the first line is interface info
 		info := strings.Split(p, "\t")
+		peers[info[0]].exists = true
 		if _, ok := peers[info[0]]; !ok {
 			peers[info[0]] = &Peer{}
 		}
@@ -73,6 +76,13 @@ func updatePeersInfo() {
 		tempTotalTx += peers[info[0]].TotalTx
 		tempCurrentRx += peers[info[0]].CurrentRx
 		tempCurrentTx += peers[info[0]].CurrentTx
+	}
+	if len(peerLines) < len(peers) {
+		for pk, p := range peers {
+			if !p.exists {
+				delete(peers, pk)
+			}
+		}
 	}
 	totalRx = tempTotalRx
 	totalTx = tempTotalTx
