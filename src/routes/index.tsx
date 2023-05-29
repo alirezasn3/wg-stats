@@ -36,7 +36,7 @@ export default component$(() => {
 
       Object.keys(groups.value).forEach((gn) => (groups.value[gn].length = 0));
 
-      let tempPeers: Peer[] = Object.values(data.peers);
+      const tempPeers: Peer[] = Object.values(data.peers);
 
       for (let i = 0; i < tempPeers.length; i++) {
         const groupName = tempPeers[i].name.split("-")[0];
