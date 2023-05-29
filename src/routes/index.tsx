@@ -33,9 +33,7 @@ export default component$(() => {
 
   useVisibleTask$(() => {
     setInterval(async () => {
-      const res = await fetch(
-        `${location.url.protocol}//api.${location.url.hostname}/api`
-      );
+      const res = await fetch("/api");
       const data = await res.json();
       Object.keys(groups.value).forEach((gn) => (groups.value[gn].length = 0));
       const tempPeers: Peer[] = Object.values(data.peers);
