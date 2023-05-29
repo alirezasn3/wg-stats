@@ -223,13 +223,7 @@ export default component$(() => {
                   {g
                     .sort((a, b) => (a.totalRx >= b.totalRx ? -1 : 1))
                     .map((p, i) => (
-                      <Peer
-                        r={totalRx.value} // to force render
-                        {...p}
-                        index={i}
-                        isAdmin={isAdmin.value}
-                        key={i}
-                      />
+                      <Peer {...p} index={i} isAdmin={isAdmin.value} key={i} />
                     ))}
                 </div>
               ))
@@ -242,13 +236,7 @@ export default component$(() => {
                 return a.currentRx >= b.currentRx ? -1 : 1;
               })
               .map((p, i) => (
-                <Peer
-                  r={totalRx.value} // to force render
-                  {...p}
-                  index={i}
-                  isAdmin={isAdmin.value}
-                  key={i}
-                />
+                <Peer {...p} index={i} isAdmin={isAdmin.value} key={i} />
               ))}
       </div>
     </>

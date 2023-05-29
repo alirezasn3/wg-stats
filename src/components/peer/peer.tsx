@@ -11,7 +11,6 @@ interface PeerProps {
   currentTx: number;
   index: number;
   isAdmin: boolean;
-  r: number;
 }
 
 function formatTime(totalSeconds: number) {
