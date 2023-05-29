@@ -11,6 +11,7 @@ interface PeerProps {
   currentTx: number;
   index: number;
   isAdmin: boolean;
+  r: number;
 }
 
 function formatTime(totalSeconds: number) {
@@ -34,43 +35,64 @@ function formatTime(totalSeconds: number) {
 
 export default component$<PeerProps>((p) => {
   return (
-    <div
-      key={p.index}
-      class="px-3 py-2 my-2 bg-slate-900 border-2 border-slate-800 rounded"
-    >
+    <div class="px-3 py-2 my-2 bg-slate-900 border-2 border-slate-800 rounded">
       {p.index + 1}. {p.name}
       <div class="w-full h-[1px] bg-slate-800 my-2" />
-      <div class="flex justify-between items-center">
-        <div class="flex items-center text-green-500">
-          <img
-            src="download.png"
-            alt="download icon"
-            class="invert w-5 h-5 mr-0.5"
-          />
-          {(p.currentRx / 1000).toFixed(2)} KiB/s
-        </div>
-        <div class="flex text-green-500 items-center">
+      <div class="flex flex-col md:flex-row md:justify-between md:items-center">
+        <div class="mb-3 md:mb-0 flex items-center justify-between text-green-500">
+          <span class="text-slate-100 inline md:hidden">Current: </span>
           <div class="flex items-center">
-            <img
-              src="download.png"
-              alt="download icon"
-              class="invert 2-5 h-5 mr-0.5"
-            />
-            {(p.totalRx / 1000000000).toFixed(2)} GiB
+            <div class="flex items-center">
+              <img
+                src="download.png"
+                alt="download icon"
+                class="invert w-5 h-5 mr-0.5"
+              />
+              {p.currentRx > 1000000
+                ? (p.currentRx / 1000000).toFixed(2) + " MiB/s"
+                : p.currentRx > 1000
+                ? (p.currentRx / 1000).toFixed(2) + " KiB/s"
+                : p.currentRx + " Bytes/s"}
+            </div>
+            <div class="border-l-2 border-slate-800 pl-0.5 ml-1 flex items-center">
+              <img
+                src="download.png"
+                alt="download icon"
+                class="invert w-5 h-5 mr-0.5"
+              />
+              {p.currentTx > 1000000
+                ? (p.currentTx / 1000000).toFixed(2) + " MiB/s"
+                : p.currentTx > 1000
+                ? (p.currentTx / 1000).toFixed(2) + " KiB/s"
+                : p.currentTx + " Bytes/s"}
+            </div>
           </div>
-          <div class="border-l-2 border-slate-800 pl-0.5 ml-1 flex items-center">
-            <img
-              src="upload.png"
-              alt="upload icon"
-              class="invert 2-5 h-5 mr-0.5"
-            />
-            {(p.totalTx / 1000000000).toFixed(2)} GiB
+        </div>
+        <div class="flex text-green-500 items-center justify-between">
+          <span class="text-slate-100 inline md:hidden">Total: </span>
+          <div class="flex items-center">
+            <div class="flex items-center">
+              <img
+                src="download.png"
+                alt="download icon"
+                class="invert 2-5 h-5 mr-0.5"
+              />
+              {(p.totalRx / 1000000000).toFixed(2)} GiB
+            </div>
+            <div class="border-l-2 border-slate-800 pl-0.5 ml-1 flex items-center">
+              <img
+                src="upload.png"
+                alt="upload icon"
+                class="invert 2-5 h-5 mr-0.5"
+              />
+              {(p.totalTx / 1000000000).toFixed(2)} GiB
+            </div>
           </div>
         </div>
       </div>
       <div class="w-full h-[1px] bg-slate-800 my-2"></div>
       <div class="truncate text-blue-500">
-        <span class="text-white">Latest Handshake: </span>
+        <div class="text-white mb-3 md:mb-0 md:inline">Latest Handshake: </div>
         {formatTime(p.latestHandshake)}
       </div>
       <div class="w-full h-[1px] bg-slate-800 my-2"></div>

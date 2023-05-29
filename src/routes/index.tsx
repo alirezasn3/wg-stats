@@ -44,14 +44,14 @@ export default component$(() => {
       isAdmin.value = data.isAdmin;
       totalRx.value = data.totalRx;
       totalTx.value = data.totalTx;
-      const rxSteps = (data.currentRx - currentRx.value) / 50;
-      const txSteps = (data.currentTx - currentTx.value) / 50;
-      for (let i = 20; i-- > 0; ) {
+      const rxSteps = (data.currentRx - currentRx.value) / 100;
+      const txSteps = (data.currentTx - currentTx.value) / 100;
+      for (let i = 10; i-- > 0; ) {
         if (currentRx.value + rxSteps < 0 || currentTx.value + txSteps < 0)
           break;
         currentRx.value += rxSteps;
         currentTx.value += txSteps;
-        await sleep(50);
+        await sleep(100);
       }
     }, 1000);
   });
@@ -137,7 +137,7 @@ export default component$(() => {
                   alt="download icon"
                   class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
                 />
-                {(currentRx.value / 8000000).toFixed(2)} MiB
+                {(currentRx.value / 1000000).toFixed(2)} MiB
               </div>
               <div class="flex items-center border-l-2 border-slate-900 pl-1 ml-1.5">
                 <img
@@ -145,7 +145,7 @@ export default component$(() => {
                   alt="upload icon"
                   class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
                 />
-                {(currentTx.value / 8000000).toFixed(2)} MiB
+                {(currentTx.value / 1000000).toFixed(2)} MiB
               </div>
             </div>
             <div class="flex items-center text-green-500">
@@ -223,7 +223,13 @@ export default component$(() => {
                   {g
                     .sort((a, b) => (a.totalRx >= b.totalRx ? -1 : 1))
                     .map((p, i) => (
-                      <Peer {...p} index={i} isAdmin={isAdmin.value} />
+                      <Peer
+                        r={currentRx.value} // to force render
+                        {...p}
+                        index={i}
+                        isAdmin={isAdmin.value}
+                        key={i}
+                      />
                     ))}
                 </div>
               ))
@@ -235,7 +241,15 @@ export default component$(() => {
                 if (sortByUsage.value) return a.totalRx >= b.totalRx ? -1 : 1;
                 return a.currentRx >= b.currentRx ? -1 : 1;
               })
-              .map((p, i) => <Peer {...p} index={i} isAdmin={isAdmin.value} />)}
+              .map((p, i) => (
+                <Peer
+                  r={currentRx.value} // to force render
+                  {...p}
+                  index={i}
+                  isAdmin={isAdmin.value}
+                  key={i}
+                />
+              ))}
       </div>
     </>
   ) : (
