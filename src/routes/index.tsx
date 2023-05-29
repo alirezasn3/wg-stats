@@ -224,7 +224,7 @@ export default component$(() => {
                     .sort((a, b) => (a.totalRx >= b.totalRx ? -1 : 1))
                     .map((p, i) => (
                       <Peer
-                        r={currentRx.value} // to force render
+                        r={totalRx.value} // to force render
                         {...p}
                         index={i}
                         isAdmin={isAdmin.value}
@@ -243,7 +243,7 @@ export default component$(() => {
               })
               .map((p, i) => (
                 <Peer
-                  r={currentRx.value} // to force render
+                  r={totalRx.value} // to force render
                   {...p}
                   index={i}
                   isAdmin={isAdmin.value}
