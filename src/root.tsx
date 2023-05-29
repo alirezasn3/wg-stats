@@ -25,7 +25,7 @@ export default component$(() => {
       </head>
       <body
         lang="en"
-        class="font-mono bg-slate-950 text-white tracking-tighter font-bold text-sm md:text-base"
+        class="font-mono bg-slate-950 text-slate-100 tracking-tighter font-bold text-sm md:text-base"
       >
         <RouterOutlet />
         <ServiceWorkerRegister />

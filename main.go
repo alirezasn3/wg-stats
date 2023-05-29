@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -14,45 +13,21 @@ import (
 )
 
 var admins []string
-var Rx int
-var Tx int
 var peers map[string]*Peer = make(map[string]*Peer)
+var totalRx uint64 = 0
+var totalTx uint64 = 0
+var currentRx uint64 = 0
+var currentTx uint64 = 0
 
 type Peer struct {
-	Name            string `json:"Name"`
-	AllowedIps      string `json:"AllowedIps"`
-	LatestHandshake uint64 `json:"LatestHandshake"`
-	Rx              uint64 `json:"Rx"`
-	Tx              uint64 `json:"Tx"`
-	ExpiresAt       uint64 `json:"ExpiresAt"`
-}
-
-type bwOutput struct{}
-
-func (c bwOutput) Write(p []byte) (int, error) {
-	if strings.Contains(string(p), "rx") {
-		var parts []string
-		for _, p := range strings.Split(string(p[strings.Index(string(p), "rx"):]), " ") {
-			if p != "" {
-				parts = append(parts, p)
-			}
-		}
-		rx, _ := strconv.ParseFloat(parts[1], 32)
-		if parts[2] == "Mbit/s" {
-			rx *= 1000000
-		} else if parts[2] == "kbit/s" {
-			rx *= 1000
-		}
-		tx, _ := strconv.ParseFloat(parts[6], 32)
-		if parts[7] == "Mbit/s" {
-			tx *= 1000000
-		} else if parts[7] == "kbit/s" {
-			tx *= 1000
-		}
-		Rx = int(rx)
-		Tx = int(tx)
-	}
-	return len(p), nil
+	Name            string `json:"name"`
+	AllowedIps      string `json:"allowedIps"`
+	LatestHandshake uint64 `json:"latestHandshake"`
+	TotalRx         uint64 `json:"totalRx"`
+	TotalTx         uint64 `json:"totalTx"`
+	CurrentRx       uint64 `json:"currentRx"`
+	CurrentTx       uint64 `json:"currentTx"`
+	ExpiresAt       uint64 `json:"expiresAt"`
 }
 
 func updatePeersInfo() {
@@ -61,15 +36,23 @@ func updatePeersInfo() {
 	if err != nil {
 		panic(err)
 	}
+	var tempCurrentRx uint64 = 0
+	var tempCurrentTx uint64 = 0
+	var tempTotalRx uint64 = 0
+	var tempTotalTx uint64 = 0
 	for _, p := range strings.Split(strings.TrimSpace(string(bytes)), "\n")[1:] { // the first line is interface info
 		info := strings.Split(p, "\t")
 		if _, ok := peers[info[0]]; !ok {
 			peers[info[0]] = &Peer{}
 		}
+		newTotalTx, _ := strconv.ParseUint(string(info[5]), 10, 64)
+		newTotalRx, _ := strconv.ParseUint(string(info[6]), 10, 64)
+		peers[info[0]].CurrentRx = newTotalRx - peers[info[0]].TotalRx
+		peers[info[0]].CurrentTx = newTotalTx - peers[info[0]].TotalTx
 		peers[info[0]].AllowedIps = string(info[3])
 		peers[info[0]].LatestHandshake, _ = strconv.ParseUint(string(info[4]), 10, 64)
-		peers[info[0]].Tx, _ = strconv.ParseUint(string(info[5]), 10, 64)
-		peers[info[0]].Rx, _ = strconv.ParseUint(string(info[6]), 10, 64)
+		peers[info[0]].TotalTx = newTotalTx
+		peers[info[0]].TotalRx = newTotalRx
 		if peers[info[0]].Name == "" {
 			bytes, err := os.ReadFile("/etc/wireguard/wg0.conf")
 			if err != nil {
@@ -86,7 +69,15 @@ func updatePeersInfo() {
 		if peers[info[0]].ExpiresAt == 0 {
 			peers[info[0]].ExpiresAt = uint64(time.Now().Unix() + 60*60*24*30)
 		}
+		tempTotalRx += peers[info[0]].TotalRx
+		tempTotalTx += peers[info[0]].TotalTx
+		tempCurrentRx += peers[info[0]].CurrentRx
+		tempCurrentTx += peers[info[0]].CurrentTx
 	}
+	totalRx = tempTotalRx
+	totalTx = tempTotalTx
+	currentRx = tempCurrentRx
+	currentTx = tempCurrentTx
 }
 
 func findPeerNameByIp(ip string) string {
@@ -134,13 +125,6 @@ func init() {
 func main() {
 	admins = os.Args[1:]
 	go func() {
-		cmd := exec.Command("vnstat", "-l")
-		cmd.Stdout = bwOutput{}
-		if err := cmd.Run(); err != nil {
-			fmt.Println("could not run command: ", err)
-		}
-	}()
-	go func() {
 		for range time.NewTicker(time.Second).C {
 			updatePeersInfo()
 			bytes, _ := json.Marshal(peers)
@@ -168,10 +152,12 @@ func main() {
 				}
 			}
 			data := make(map[string]interface{})
-			data["Peers"] = tempPeers
-			data["Rx"] = Rx
-			data["Tx"] = Tx
-			data["IsAdmin"] = isAdmin
+			data["peers"] = tempPeers
+			data["totalRx"] = totalRx
+			data["totalTx"] = totalTx
+			data["currentRx"] = currentRx
+			data["currentTx"] = currentTx
+			data["isAdmin"] = isAdmin
 			bytes, err := json.Marshal(data)
 			if err != nil {
 				w.Write([]byte("{}"))
