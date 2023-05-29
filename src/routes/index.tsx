@@ -33,26 +33,19 @@ export default component$(() => {
     setInterval(async () => {
       const res = await fetch("http://my.stats:5051/api");
       const data = await res.json();
-
       Object.keys(groups.value).forEach((gn) => (groups.value[gn].length = 0));
-
       const tempPeers: Peer[] = Object.values(data.peers);
-
       for (let i = 0; i < tempPeers.length; i++) {
         const groupName = tempPeers[i].name.split("-")[0];
         if (groups.value[groupName]) groups.value[groupName].push(tempPeers[i]);
         else groups.value[groupName] = [tempPeers[i]];
       }
-
       peers.value = tempPeers;
-
       isAdmin.value = data.isAdmin;
-
-      currentRx.value = data.currentRx;
-      currentTx.value = data.currentTx;
-
-      const rxSteps = (data.totalRx - currentRx.value) / 50;
-      const txSteps = (data.totalTx - currentTx.value) / 50;
+      totalRx.value = data.totalRx;
+      totalTx.value = data.totalTx;
+      const rxSteps = (data.currentRx - currentRx.value) / 50;
+      const txSteps = (data.currentTx - currentTx.value) / 50;
       for (let i = 20; i-- > 0; ) {
         if (currentRx.value + rxSteps < 0 || currentTx.value + txSteps < 0)
           break;
@@ -94,7 +87,7 @@ export default component$(() => {
                   alt="download icon"
                   class="invert h-4 w-4 md:h-6 md:w-6 pr-0.5"
                 />
-                {(currentRx.value / 8000000).toFixed(2)} MiB
+                {(currentRx.value / 1000000).toFixed(2)} MiB
               </div>
               <div class="flex items-center border-l-2 border-slate-900 pl-1 ml-1.5">
                 <img
@@ -102,7 +95,7 @@ export default component$(() => {
                   alt="upload icon"
                   class="invert h-4 w-4 md:h-6 md:w-6 pr-0.5"
                 />
-                {(currentTx.value / 8000000).toFixed(2)} MiB
+                {(currentTx.value / 1000000).toFixed(2)} MiB
               </div>
             </div>
             <div class="hidden md:flex items-center text-green-500">
