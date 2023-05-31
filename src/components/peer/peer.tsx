@@ -55,8 +55,8 @@ export default component$<PeerProps>((p) => {
             </div>
             <div class="border-l-2 border-slate-800 pl-0.5 ml-1 flex items-center">
               <img
-                src="download.png"
-                alt="download icon"
+                src="upload.png"
+                alt="upload icon"
                 class="invert w-5 h-5 mr-0.5"
               />
               {p.currentTx > 1000000
