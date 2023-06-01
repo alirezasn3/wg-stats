@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -93,9 +92,8 @@ func updatePeersInfo() {
 
 func findPeerNameByIp(ip string) string {
 	for _, p := range peers {
-		fmt.Println(strings.Split(p.AllowedIps, ","))
 		for _, aip := range strings.Split(p.AllowedIps, ",") {
-			if aip == ip {
+			if strings.Split(aip, "/")[0] == ip {
 				return p.Name
 			}
 		}
@@ -154,7 +152,7 @@ func main() {
 			tempPeers := make(map[string]*Peer)
 			isAdmin := false
 			for _, n := range admins {
-				if strings.Contains(name, n+"-") {
+				if strings.Contains(name, n+"-") && len(n)+2 == len(name) {
 					isAdmin = true
 					break
 				}
