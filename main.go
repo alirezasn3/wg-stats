@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -149,6 +150,7 @@ func main() {
 	http.Handle("/api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			name := findPeerNameByIp(strings.Split(r.Header.Get("X-Real-IP"), ":")[0])
+			fmt.Println(name)
 			tempPeers := make(map[string]*Peer)
 			isAdmin := false
 			for _, n := range admins {
@@ -161,7 +163,7 @@ func main() {
 				tempPeers = peers
 			} else {
 				for pk, p := range peers {
-					if strings.Contains(p.Name, strings.Split(name, "-")[0]+"-") && len(name)+2 == len(p.Name) {
+					if strings.Contains(p.Name, strings.Split(name, "-")[0]+"-") {
 						tempPeers[pk] = p
 					}
 				}
