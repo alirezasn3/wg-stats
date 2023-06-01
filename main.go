@@ -161,7 +161,7 @@ func main() {
 				tempPeers = peers
 			} else {
 				for pk, p := range peers {
-					if strings.Contains(p.Name, strings.Split(name, "-")[0]+"-") && len(name) == len(p.Name) {
+					if strings.Contains(p.Name, strings.Split(name, "-")[0]+"-") {
 						tempPeers[pk] = p
 					}
 				}
