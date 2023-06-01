@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -161,7 +160,6 @@ func main() {
 			if isAdmin {
 				tempPeers = peers
 			} else {
-				fmt.Println(name + " is not admin")
 				for pk, p := range peers {
 					if strings.Contains(p.Name, strings.Split(name, "-")[0]+"-") {
 						tempPeers[pk] = p
