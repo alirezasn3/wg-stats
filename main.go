@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -92,6 +93,7 @@ func updatePeersInfo() {
 
 func findPeerNameByIp(ip string) string {
 	for _, p := range peers {
+		fmt.Println(strings.Split(p.AllowedIps, ","))
 		for _, aip := range strings.Split(p.AllowedIps, ",") {
 			if aip == ip {
 				return p.Name
