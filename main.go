@@ -92,8 +92,10 @@ func updatePeersInfo() {
 
 func findPeerNameByIp(ip string) string {
 	for _, p := range peers {
-		if strings.Contains(p.AllowedIps, ip) {
-			return p.Name
+		for _, aip := range strings.Split(p.AllowedIps, ",") {
+			if aip == ip {
+				return p.Name
+			}
 		}
 	}
 	return ""
@@ -146,10 +148,11 @@ func main() {
 	}()
 	http.Handle("/api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
-			name := findPeerNameByIp(strings.Split(r.Header.Get("X-Real-IP"), ":")[0])
+			name := (strings.Split(r.Header.Get("X-Real-IP"), ":")[0])
 			tempPeers := make(map[string]*Peer)
 			isAdmin := false
 			for _, n := range admins {
+				// AghaMaleki-0 contains al- || mo-
 				if strings.Contains(name, n+"-") {
 					isAdmin = true
 					break
