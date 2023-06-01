@@ -152,8 +152,7 @@ func main() {
 			tempPeers := make(map[string]*Peer)
 			isAdmin := false
 			for _, n := range admins {
-				// AghaMaleki-0 contains al- || mo-
-				if strings.Contains(name, n+"-") && len(name) == len(n)+2 {
+				if strings.Contains(name, n+"-") {
 					isAdmin = true
 					break
 				}
