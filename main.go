@@ -93,6 +93,7 @@ func updatePeersInfo() {
 
 func findPeerNameByIp(ip string) string {
 	for _, p := range peers {
+		fmt.Println(strings.Split(p.AllowedIps, ","))
 		for _, aip := range strings.Split(p.AllowedIps, ",") {
 			if aip == ip {
 				return p.Name
@@ -150,7 +151,6 @@ func main() {
 	http.Handle("/api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			name := findPeerNameByIp(strings.Split(r.Header.Get("X-Real-IP"), ":")[0])
-			fmt.Println(name)
 			tempPeers := make(map[string]*Peer)
 			isAdmin := false
 			for _, n := range admins {
@@ -163,7 +163,7 @@ func main() {
 				tempPeers = peers
 			} else {
 				for pk, p := range peers {
-					if strings.Contains(p.Name, strings.Split(name, "-")[0]+"-") {
+					if strings.Contains(p.Name, strings.Split(name, "-")[0]+"-") && len(name)+2 == len(p.Name) {
 						tempPeers[pk] = p
 					}
 				}
