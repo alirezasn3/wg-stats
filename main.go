@@ -153,7 +153,7 @@ func main() {
 			isAdmin := false
 			for _, n := range admins {
 				// AghaMaleki-0 contains al- || mo-
-				if strings.Contains(name, n+"-") {
+				if strings.Contains(name, n+"-") && len(name) == len(n)+2 {
 					isAdmin = true
 					break
 				}
