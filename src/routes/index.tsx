@@ -111,7 +111,7 @@ export default component$(() => {
                 <img
                   src="upload.png"
                   alt="upload icon"
-                  class="invert h-4 w-4 md:h-6 md:2-6 pr-0.5"
+                  class="invert h-4 w-4 md:h-6 md:w-6 pr-0.5"
                 />
                 {(totalTx.value / 1000000000).toFixed(2)} GiB
               </div>
