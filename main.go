@@ -19,7 +19,6 @@ import (
 
 var config Config
 var coll *mongo.Collection
-var admins []string
 var peers map[string]*Peer = make(map[string]*Peer)
 var totalRx uint64 = 0
 var totalTx uint64 = 0
@@ -27,9 +26,10 @@ var currentRx uint64 = 0
 var currentTx uint64 = 0
 
 type Config struct {
-	MongoURI       string `json:"mongoURI"`
-	DBName         string `json:"dbName"`
-	CollectionName string `json:"collectionName"`
+	MongoURI       string   `json:"mongoURI"`
+	DBName         string   `json:"dbName"`
+	CollectionName string   `json:"collectionName"`
+	Admins         []string `json:"admins"`
 }
 
 type Peer struct {
@@ -186,7 +186,6 @@ func init() {
 }
 
 func main() {
-	admins = os.Args[1:]
 	go func() {
 		for range time.NewTicker(time.Second).C {
 			updatePeersInfo()
@@ -197,7 +196,7 @@ func main() {
 			name := findPeerNameByIp(strings.Split(r.Header.Get("X-Real-IP"), ":")[0])
 			tempPeers := make(map[string]*Peer)
 			isAdmin := false
-			for _, n := range admins {
+			for _, n := range config.Admins {
 				if strings.Contains(name, n+"-") && len(n)+2 == len(name) {
 					isAdmin = true
 					break
@@ -229,7 +228,7 @@ func main() {
 		} else if r.Method == "POST" {
 			name := findPeerNameByIp(strings.Split(r.Header.Get("X-Real-IP"), ":")[0])
 			isAdmin := false
-			for _, n := range admins {
+			for _, n := range config.Admins {
 				if strings.Contains(name, n+"-") {
 					isAdmin = true
 					break
