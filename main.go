@@ -15,6 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/exp/slices"
 )
 
 var config Config
@@ -157,7 +158,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
 	client, err := mongo.Connect(
 		context.TODO(),
 		options.Client().ApplyURI(config.MongoURI).SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1)))
@@ -165,7 +165,6 @@ func init() {
 		panic(err)
 	}
 	coll = client.Database(config.DBName).Collection(config.CollectionName)
-
 	var data []Peer
 	cursor, err := coll.Find(context.TODO(), bson.D{})
 	if err != nil {
@@ -174,7 +173,6 @@ func init() {
 	if err = cursor.All(context.TODO(), &data); err != nil {
 		panic(err)
 	}
-
 	for _, p := range data {
 		peers[p.PublicKey] = &Peer{}
 		peers[p.PublicKey].Name = p.Name
@@ -193,15 +191,14 @@ func main() {
 	}()
 	http.Handle("/api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
-			name := findPeerNameByIp(strings.Split(r.Header.Get("X-Real-IP"), ":")[0])
-			tempPeers := make(map[string]*Peer)
-			isAdmin := false
-			for _, n := range config.Admins {
-				if strings.Contains(name, n+"-") && len(n)+2 == len(name) {
-					isAdmin = true
-					break
-				}
+			ra := r.Header.Get("X-Real-IP")
+			if ra == "" {
+				ra = r.RemoteAddr
 			}
+			name := findPeerNameByIp(strings.Split(ra, ":")[0])
+			fmt.Println(name + " " + r.RemoteAddr)
+			tempPeers := make(map[string]*Peer)
+			isAdmin := slices.Contains(config.Admins, name)
 			if isAdmin {
 				tempPeers = peers
 			} else {
@@ -227,13 +224,7 @@ func main() {
 			w.Write(bytes)
 		} else if r.Method == "POST" {
 			name := findPeerNameByIp(strings.Split(r.Header.Get("X-Real-IP"), ":")[0])
-			isAdmin := false
-			for _, n := range config.Admins {
-				if strings.Contains(name, n+"-") {
-					isAdmin = true
-					break
-				}
-			}
+			isAdmin := slices.Contains(config.Admins, name)
 			if !isAdmin {
 				w.WriteHeader(403)
 				return
