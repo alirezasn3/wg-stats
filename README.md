@@ -30,6 +30,17 @@ Note that the grouping functionallity is case sensitive.
 * Build the api using this command: `go build .`
 * Build the front-end project using this command: `npm run build`
 * Add service files to systemctl and start the services.
+* Create config.json file
+
+## Sample config file
+```json
+{
+  "mongoURI": "mongodb+srv://username:password@clustername.mongodb.net/?retryWrites=true&w=majority",
+  "dbName": "wgdb",
+  "collectionName": "users",
+  "admins": ["Alireza"]
+}
+```
 
 ## Screenshots
 
