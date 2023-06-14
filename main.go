@@ -1,8 +1,9 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -10,8 +11,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var config Config
+var coll *mongo.Collection
 var admins []string
 var peers map[string]*Peer = make(map[string]*Peer)
 var totalRx uint64 = 0
@@ -19,16 +26,22 @@ var totalTx uint64 = 0
 var currentRx uint64 = 0
 var currentTx uint64 = 0
 
+type Config struct {
+	MongoURI       string `json:"mongoURI"`
+	DBName         string `json:"dbName"`
+	CollectionName string `json:"collectionName"`
+}
+
 type Peer struct {
-	Name            string `json:"name"`
-	AllowedIps      string `json:"allowedIps"`
-	LatestHandshake uint64 `json:"latestHandshake"`
+	Name            string `bson:"name,omitempty" json:"name"`
+	PublicKey       string `bson:"publicKey,omitempty" json:"publicKey"`
+	AllowedIps      string `bson:"allowedIps,omitempty" json:"allowedIps"`
+	LatestHandshake uint64 `bson:"latestHandshake,omitempty" json:"latestHandshake"`
 	TotalRx         uint64 `json:"totalRx"`
 	TotalTx         uint64 `json:"totalTx"`
 	CurrentRx       uint64 `json:"currentRx"`
 	CurrentTx       uint64 `json:"currentTx"`
-	ExpiresAt       uint64 `json:"expiresAt"`
-	exists          bool
+	ExpiresAt       uint64 `bson:"expiresAt,omitempty" json:"expiresAt"`
 }
 
 func updatePeersInfo() {
@@ -41,48 +54,69 @@ func updatePeersInfo() {
 	var tempCurrentTx uint64 = 0
 	var tempTotalRx uint64 = 0
 	var tempTotalTx uint64 = 0
-	peerLines := strings.Split(strings.TrimSpace(string(bytes)), "\n")[1:]
-	for _, p := range peerLines { // the first line is interface info
+	peerLines := strings.Split(strings.TrimSpace(string(bytes)), "\n")[1:] // the first line is interface info
+	if len(peers) > len(peerLines) {
+
+		var tempPeers map[string]Peer
+		cursor, err := coll.Find(context.TODO(), bson.D{})
+		if err != nil {
+			panic(err)
+		}
+		if err = cursor.All(context.TODO(), &tempPeers); err != nil {
+			panic(err)
+		}
+		for _, p := range tempPeers {
+			if _, ok := peers[p.PublicKey]; !ok {
+				fmt.Printf("removing client with public key: %s\n", p.PublicKey)
+				_, err := coll.DeleteMany(context.TODO(), bson.D{{Key: "publicKey", Value: p.PublicKey}})
+				if err != nil {
+					panic(err)
+				}
+			}
+		}
+	}
+	for _, p := range peerLines {
 		info := strings.Split(p, "\t")
 		if _, ok := peers[info[0]]; !ok {
+			fmt.Printf("creating new client with public key: %s\n", info[0])
 			peers[info[0]] = &Peer{}
+			peers[info[0]].PublicKey = info[0]
+			peers[info[0]].AllowedIps = string(info[3])
+			peers[info[0]].ExpiresAt = uint64(time.Now().Unix() + 60*60*24*30)
+			_, err = coll.InsertOne(context.TODO(), peers[info[0]])
+			if err != nil {
+				panic(err)
+			}
 		}
-		peers[info[0]].exists = true
+		bytes, err := os.ReadFile("/etc/wireguard/wg0.conf")
+		if err != nil {
+			panic(err)
+		}
+		j := strings.Index(string(bytes), "\n[Peer]\nPublicKey = "+info[0])
+		i := j - 1
+		for string(bytes[i]) != " " && i >= 0 {
+			i--
+		}
+		i++
+		if peers[info[0]].Name != string(bytes[i:j]) {
+			peers[info[0]].Name = string(bytes[i:j])
+			_, err = coll.UpdateOne(context.TODO(), bson.D{{Key: "publicKey", Value: peers[info[0]].PublicKey}}, bson.D{{Key: "$set", Value: bson.D{{Key: "name", Value: string(bytes[i:j])}}}})
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("changed [%s] to [%s]\n", peers[info[0]].Name, string(bytes[i:j]))
+		}
 		newTotalTx, _ := strconv.ParseUint(string(info[5]), 10, 64)
 		newTotalRx, _ := strconv.ParseUint(string(info[6]), 10, 64)
 		peers[info[0]].CurrentRx = newTotalRx - peers[info[0]].TotalRx
 		peers[info[0]].CurrentTx = newTotalTx - peers[info[0]].TotalTx
-		peers[info[0]].AllowedIps = string(info[3])
 		peers[info[0]].LatestHandshake, _ = strconv.ParseUint(string(info[4]), 10, 64)
 		peers[info[0]].TotalTx = newTotalTx
 		peers[info[0]].TotalRx = newTotalRx
-		if peers[info[0]].Name == "" {
-			bytes, err := os.ReadFile("/etc/wireguard/wg0.conf")
-			if err != nil {
-				panic(err)
-			}
-			j := strings.Index(string(bytes), "\n[Peer]\nPublicKey = "+info[0])
-			i := j - 1
-			for string(bytes[i]) != " " && i >= 0 {
-				i--
-			}
-			i++
-			peers[info[0]].Name = string(bytes[i:j])
-		}
-		if peers[info[0]].ExpiresAt == 0 {
-			peers[info[0]].ExpiresAt = uint64(time.Now().Unix() + 60*60*24*30)
-		}
 		tempTotalRx += peers[info[0]].TotalRx
 		tempTotalTx += peers[info[0]].TotalTx
 		tempCurrentRx += peers[info[0]].CurrentRx
 		tempCurrentTx += peers[info[0]].CurrentTx
-	}
-	if len(peerLines) < len(peers) {
-		for pk, p := range peers {
-			if !p.exists {
-				delete(peers, pk)
-			}
-		}
 	}
 	totalRx = tempTotalRx
 	totalTx = tempTotalTx
@@ -111,29 +145,43 @@ func findPeerPublicKeyByName(name string) string {
 }
 
 func init() {
-	updatePeersInfo()
-	_, err := os.Stat("db.json")
-	if errors.Is(err, os.ErrNotExist) {
-		f, _ := os.Create("db.json")
-		f.Close()
+	configPath := "config.json"
+	if len(os.Args) > 1 {
+		configPath = os.Args[1] + configPath
 	}
-	bytes, err := os.ReadFile("db.json")
+	bytes, err := os.ReadFile(configPath)
 	if err != nil {
 		panic(err)
 	}
-	var data map[string]Peer
-	err = json.Unmarshal(bytes, &data)
-	if err == nil {
-		for pk, p := range data {
-			if _, ok := peers[pk]; !ok {
-				continue
-			}
-			if p.ExpiresAt == 0 {
-				peers[pk].ExpiresAt = uint64(time.Now().Unix() + 60*60*24*30)
-			} else {
-				peers[pk].ExpiresAt = p.ExpiresAt
-			}
-		}
+	err = json.Unmarshal(bytes, &config)
+	if err != nil {
+		panic(err)
+	}
+
+	client, err := mongo.Connect(
+		context.TODO(),
+		options.Client().ApplyURI(config.MongoURI).SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1)))
+	if err != nil {
+		panic(err)
+	}
+	coll = client.Database(config.DBName).Collection(config.CollectionName)
+
+	var data []Peer
+	cursor, err := coll.Find(context.TODO(), bson.D{})
+	if err != nil {
+		panic(err)
+	}
+	if err = cursor.All(context.TODO(), &data); err != nil {
+		panic(err)
+	}
+
+	for _, p := range data {
+		peers[p.PublicKey] = &Peer{}
+		peers[p.PublicKey].Name = p.Name
+		peers[p.PublicKey].AllowedIps = p.AllowedIps
+		peers[p.PublicKey].ExpiresAt = p.ExpiresAt
+		peers[p.PublicKey].PublicKey = p.PublicKey
+		peers[p.PublicKey].LatestHandshake = p.LatestHandshake
 	}
 }
 
@@ -142,8 +190,6 @@ func main() {
 	go func() {
 		for range time.NewTicker(time.Second).C {
 			updatePeersInfo()
-			bytes, _ := json.Marshal(peers)
-			os.WriteFile("db.json", bytes, 0644)
 		}
 	}()
 	http.Handle("/api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -206,8 +252,14 @@ func main() {
 				return
 			}
 			peers[findPeerPublicKeyByName(p.Name)].ExpiresAt = p.ExpiresAt
+			_, err = coll.UpdateOne(context.TODO(), bson.D{{Key: "publicKey", Value: peers[findPeerPublicKeyByName(p.Name)].PublicKey}}, bson.M{"$set": bson.M{"expiresAt": p.ExpiresAt}})
+			if err != nil {
+				panic(err)
+			}
 			w.WriteHeader(200)
 		}
 	}))
-	http.ListenAndServe(":5051", nil)
+	if err := http.ListenAndServe(":5051", nil); err != nil {
+		panic(err)
+	}
 }

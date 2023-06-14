@@ -38,4 +38,4 @@ lerna-debug.log*
 .yarn/*
 !.yarn/releases
 
-db.json
+config.json
