@@ -36,13 +36,14 @@ type Config struct {
 type Peer struct {
 	Name            string `bson:"name,omitempty" json:"name"`
 	PublicKey       string `bson:"publicKey,omitempty" json:"publicKey"`
+	PresharedKey    string `bson:"presharedKey,omitempty" json:"presharedKey"`
 	AllowedIps      string `bson:"allowedIps,omitempty" json:"allowedIps"`
-	LatestHandshake uint64 `bson:"latestHandshake,omitempty" json:"latestHandshake"`
+	ExpiresAt       uint64 `bson:"expiresAt,omitempty" json:"expiresAt"`
+	LatestHandshake uint64 `json:"latestHandshake"`
 	TotalRx         uint64 `json:"totalRx"`
 	TotalTx         uint64 `json:"totalTx"`
 	CurrentRx       uint64 `json:"currentRx"`
 	CurrentTx       uint64 `json:"currentTx"`
-	ExpiresAt       uint64 `bson:"expiresAt,omitempty" json:"expiresAt"`
 }
 
 func updatePeersInfo() {
@@ -57,8 +58,7 @@ func updatePeersInfo() {
 	var tempTotalTx uint64 = 0
 	peerLines := strings.Split(strings.TrimSpace(string(bytes)), "\n")[1:] // the first line is interface info
 	if len(peers) > len(peerLines) {
-
-		var tempPeers map[string]Peer
+		var tempPeers []Peer
 		cursor, err := coll.Find(context.TODO(), bson.D{})
 		if err != nil {
 			panic(err)
@@ -67,8 +67,9 @@ func updatePeersInfo() {
 			panic(err)
 		}
 		for _, p := range tempPeers {
-			if _, ok := peers[p.PublicKey]; !ok {
-				fmt.Printf("removing client with public key: %s\n", p.PublicKey)
+			if !strings.Contains(string(bytes), p.PublicKey) {
+				fmt.Printf("removing [%s] with public key [%s]\n", p.Name, p.PublicKey)
+				delete(peers, p.PublicKey)
 				_, err := coll.DeleteMany(context.TODO(), bson.D{{Key: "publicKey", Value: p.PublicKey}})
 				if err != nil {
 					panic(err)
@@ -79,9 +80,10 @@ func updatePeersInfo() {
 	for _, p := range peerLines {
 		info := strings.Split(p, "\t")
 		if _, ok := peers[info[0]]; !ok {
-			fmt.Printf("creating new client with public key: %s\n", info[0])
+			fmt.Printf("creating peer with public key [%s]\n", info[0])
 			peers[info[0]] = &Peer{}
 			peers[info[0]].PublicKey = info[0]
+			peers[info[0]].PresharedKey = info[1]
 			peers[info[0]].AllowedIps = string(info[3])
 			peers[info[0]].ExpiresAt = uint64(time.Now().Unix() + 60*60*24*30)
 			_, err = coll.InsertOne(context.TODO(), peers[info[0]])
@@ -89,6 +91,7 @@ func updatePeersInfo() {
 				panic(err)
 			}
 		}
+		peers[info[0]].PresharedKey = info[1]
 		bytes, err := os.ReadFile("/etc/wireguard/wg0.conf")
 		if err != nil {
 			panic(err)
@@ -105,7 +108,6 @@ func updatePeersInfo() {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("changed [%s] to [%s]\n", peers[info[0]].Name, string(bytes[i:j]))
 		}
 		newTotalTx, _ := strconv.ParseUint(string(info[5]), 10, 64)
 		newTotalRx, _ := strconv.ParseUint(string(info[6]), 10, 64)
@@ -196,7 +198,6 @@ func main() {
 				ra = r.RemoteAddr
 			}
 			name := findPeerNameByIp(strings.Split(ra, ":")[0])
-			fmt.Println(name + " " + r.RemoteAddr)
 			tempPeers := make(map[string]*Peer)
 			isAdmin := slices.Contains(config.Admins, name)
 			if isAdmin {

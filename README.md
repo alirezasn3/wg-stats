@@ -38,7 +38,7 @@ Note that the grouping functionallity is case sensitive.
   "mongoURI": "mongodb+srv://username:password@clustername.mongodb.net/?retryWrites=true&w=majority",
   "dbName": "wgdb",
   "collectionName": "users",
-  "admins": ["Alireza"]
+  "admins": ["Alireza-0"]
 }
 ```
 
