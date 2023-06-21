@@ -106,7 +106,7 @@ export default component$<PeerProps>((p) => {
             <input
               bind:value={remainingDays}
               type="number"
-              class="text-slate-900 px-1 mx-1 rounded"
+              class="text-slate-900 px-1 mx-1 rounded max-w-[100px]"
             />
           ) : p.expiresAt ? (
             <span
