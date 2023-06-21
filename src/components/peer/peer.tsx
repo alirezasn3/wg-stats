@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, useSignal } from "@builder.io/qwik";
 
 interface PeerProps {
   name: string;
@@ -33,6 +33,10 @@ function formatTime(totalSeconds: number) {
 }
 
 export default component$<PeerProps>((p) => {
+  const remainingDays = useSignal(
+    Math.ceil((p.expiresAt - Date.now() / 1000) / 86400).toString()
+  );
+  const editingDate = useSignal(false);
   return (
     <div class="px-3 py-2 my-2 bg-slate-900 border-2 border-slate-800 rounded">
       {p.index + 1}. {p.name}
@@ -96,46 +100,51 @@ export default component$<PeerProps>((p) => {
       </div>
       <div class="w-full h-[1px] bg-slate-800 my-2"></div>
       <div class="flex justify-between items-center">
-        <div>
+        <div class="flex">
           <span class="text-white">Expires In: </span>
+          {editingDate.value ? (
+            <input
+              bind:value={remainingDays}
+              type="number"
+              class="text-slate-900 px-1 mx-1 rounded"
+            />
+          ) : p.expiresAt ? (
+            <span
+              class="text-blue-500 px-1"
+              title={new Date(p.expiresAt * 1000).toLocaleDateString()}
+            >
+              {Math.ceil((p.expiresAt - Date.now() / 1000) / 86400)}
+            </span>
+          ) : (
+            "?"
+          )}
           <span
             class="text-blue-500"
             title={new Date(p.expiresAt * 1000).toLocaleDateString()}
           >
-            {p.expiresAt
-              ? Math.ceil((p.expiresAt - Date.now() / 1000) / 86400)
-              : "?"}{" "}
             days
           </span>
         </div>
         <div class={`${p.isAdmin ? "flex" : "hidden"} items-center`}>
           <img
-            onClick$={() =>
-              fetch("api", {
-                method: "POST",
-                body: JSON.stringify({
-                  Name: p.name,
-                  ExpiresAt: p.expiresAt + 24 * 3600,
-                }),
-              })
-            }
-            src="add.png"
-            alt="add icon"
-            class="mr-4 invert w-6 h-6 border-black border-2 rounded-full hover:cursor-pointer"
-          />
-          <img
-            onClick$={() =>
-              fetch("api", {
-                method: "POST",
-                body: JSON.stringify({
-                  Name: p.name,
-                  ExpiresAt: p.expiresAt - 24 * 3600,
-                }),
-              })
-            }
-            src="remove.png"
-            alt="remove icon"
-            class="invert w-6 h-6 border-black border-2 rounded-full hover:cursor-pointer"
+            onClick$={() => {
+              if (editingDate.value) {
+                const diff =
+                  Number(remainingDays.value) -
+                  Math.ceil((p.expiresAt - Date.now() / 1000) / 86400);
+                fetch("api", {
+                  method: "POST",
+                  body: JSON.stringify({
+                    Name: p.name,
+                    ExpiresAt: p.expiresAt + diff * 24 * 3600,
+                  }),
+                });
+              }
+              editingDate.value = !editingDate.value;
+            }}
+            src={editingDate.value ? "done.png" : "edit.png"}
+            alt={`${editingDate.value ? "edit" : "done"} icon`}
+            class="mr-4 invert w-6 h-6 rounded-full hover:cursor-pointer"
           />
         </div>
       </div>
