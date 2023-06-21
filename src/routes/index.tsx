@@ -218,7 +218,7 @@ export default component$(() => {
                 return a.currentRx >= b.currentRx ? -1 : 1;
               })
               .map((p, i) => (
-                <Peer {...p} index={i} isAdmin={isAdmin.value} key={i} />
+                <Peer {...p} index={i} isAdmin={isAdmin.value} key={i + p.name} />
               ))}
       </div>
     </>
