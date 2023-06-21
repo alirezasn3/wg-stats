@@ -100,13 +100,13 @@ export default component$<PeerProps>((p) => {
       </div>
       <div class="w-full h-[1px] bg-slate-800 my-2"></div>
       <div class="flex justify-between items-center">
-        <div class="flex">
+        <div class="flex items-center">
           <span class="text-white">Expires In: </span>
           {editingDate.value ? (
             <input
               bind:value={remainingDays}
               type="number"
-              class="text-slate-900 px-1 mx-1 rounded max-w-[100px]"
+              class="text-slate-900 px-1 mx-1 rounded max-w-[100px] h-full"
             />
           ) : p.expiresAt ? (
             <span
