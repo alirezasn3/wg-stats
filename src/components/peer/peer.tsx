@@ -132,13 +132,14 @@ export default component$<PeerProps>((p) => {
                 const diff =
                   Number(remainingDays.value) -
                   Math.ceil((p.expiresAt - Date.now() / 1000) / 86400);
-                fetch("api", {
-                  method: "POST",
-                  body: JSON.stringify({
-                    Name: p.name,
-                    ExpiresAt: p.expiresAt + diff * 24 * 3600,
-                  }),
-                });
+                if (diff != 0)
+                  fetch("api", {
+                    method: "POST",
+                    body: JSON.stringify({
+                      Name: p.name,
+                      ExpiresAt: p.expiresAt + diff * 24 * 3600,
+                    }),
+                  });
               }
               editingDate.value = !editingDate.value;
             }}
