@@ -108,18 +108,24 @@ export default component$<PeerProps>((p) => {
               type="number"
               class="text-slate-900 px-1 mx-1 rounded max-w-[100px] h-full"
             />
-          ) : p.expiresAt ? (
+          ) : (
             <span
-              class="text-blue-500 px-1"
+              class={`${
+                Math.ceil((p.expiresAt - Date.now() / 1000) / 86400) > 0
+                  ? "text-blue-500"
+                  : "text-red-500"
+              } px-1`}
               title={new Date(p.expiresAt * 1000).toLocaleDateString()}
             >
               {Math.ceil((p.expiresAt - Date.now() / 1000) / 86400)}
             </span>
-          ) : (
-            "?"
           )}
           <span
-            class="text-blue-500"
+            class={
+              Math.ceil((p.expiresAt - Date.now() / 1000) / 86400) > 0
+                ? "text-blue-500"
+                : "text-red-500"
+            }
             title={new Date(p.expiresAt * 1000).toLocaleDateString()}
           >
             days

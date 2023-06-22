@@ -89,14 +89,14 @@ export default component$(() => {
               />
             </div>
           </div>
-          <div class="mt-4 flex justify-between">
-            <span>Sorted By :</span>
-            <span class="text-orange-500">
-              {!sortByUsage.value && !showGroupView.value
-                ? "Current Bandwidth"
-                : "Total Usage"}
-            </span>
-          </div>
+          {!showGroupView.value && (
+            <div class="mt-4 flex justify-between">
+              <span>Sorted By :</span>
+              <span class="text-orange-500">
+                {sortByUsage.value ? "Total Usage" : "Current Bandwidth"}
+              </span>
+            </div>
+          )}
           <div class="flex flex-col mt-4">
             <div class="flex justify-between items-center pt-1">
               Total :
@@ -218,7 +218,12 @@ export default component$(() => {
                 return a.currentRx >= b.currentRx ? -1 : 1;
               })
               .map((p, i) => (
-                <Peer {...p} index={i} isAdmin={isAdmin.value} key={i + p.name} />
+                <Peer
+                  {...p}
+                  index={i}
+                  isAdmin={isAdmin.value}
+                  key={i + p.name}
+                />
               ))}
       </div>
     </>
