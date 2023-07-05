@@ -111,24 +111,24 @@ export default component$<PeerProps>((p) => {
           ) : (
             <span
               class={`${
-                Math.ceil((p.expiresAt - Date.now() / 1000) / 86400) > 0
+                Number(remainingDays.value) > 0
                   ? "text-blue-500"
                   : "text-red-500"
               } px-1`}
               title={new Date(p.expiresAt * 1000).toLocaleDateString()}
             >
-              {Math.ceil((p.expiresAt - Date.now() / 1000) / 86400)}
+              {Math.abs(Number(remainingDays.value)) > 0
+                ? remainingDays.value
+                : Math.ceil(((p.expiresAt - Date.now() / 1000) / 3600) % 24)}
             </span>
           )}
           <span
             class={
-              Math.ceil((p.expiresAt - Date.now() / 1000) / 86400) > 0
-                ? "text-blue-500"
-                : "text-red-500"
+              Number(remainingDays.value) > 0 ? "text-blue-500" : "text-red-500"
             }
             title={new Date(p.expiresAt * 1000).toLocaleDateString()}
           >
-            days
+            {Math.abs(Number(remainingDays.value)) > 0 ? "days" : "hours"}
           </span>
         </div>
         <div class={`${p.isAdmin ? "flex" : "hidden"} items-center`}>
