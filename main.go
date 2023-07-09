@@ -88,7 +88,8 @@ func updatePeersInfo() {
 			peers[info[0]].PresharedKey = info[1]
 			peers[info[0]].AllowedIps = string(info[3])
 			peers[info[0]].ExpiresAt = uint64(time.Now().Unix() + 60*60*24*30)
-			_, err = coll.InsertOne(context.TODO(), peers[info[0]])
+			b := true
+			_, err = coll.UpdateOne(context.TODO(), bson.M{"publicKey": info[0]}, peers[info[0]], &options.UpdateOptions{Upsert: &b})
 			if err != nil {
 				panic(err)
 			}
