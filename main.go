@@ -134,23 +134,21 @@ func updatePeersInfo() {
 func revokeExpiredPeers() {
 	for _, p := range peers {
 		if p.Active && p.ExpiresAt < uint64(time.Now().Unix()) {
-			fmt.Println(p.Name)
-			fmt.Println(p.ID.Hex())
+			// _, err := coll.UpdateOne(context.Background(), bson.D{{Key: "publicKey", Value: findPeerPublicKeyByName(p.Name)}}, bson.M{"active": false})
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// cmd := exec.Command("sed", "-i", "'s/"+p.PresharedKey+"/"+p.ID.Hex()+"AAAAAAAAAAAAAAAAAAA="+"/g'", "/etc/wireguard/wg0.conf")
+			// _, err = cmd.Output()
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// cmd = exec.Command("wg", "syncconf", "wg0", "<(wg-quick strip wg0)")
+			// _, err = cmd.Output()
+			// if err != nil {
+			// 	panic(err)
+			// }
 		}
-		// _, err := coll.UpdateOne(context.Background(), bson.D{{Key: "publicKey", Value: findPeerPublicKeyByName(p.Name)}}, bson.M{"active": false})
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// cmd := exec.Command("sed", "-i", "'s/"+p.PresharedKey+"/"+p.ID.Hex()+"AAAAAAAAAAAAAAAAAAA="+"/g'", "/etc/wireguard/wg0.conf")
-		// _, err = cmd.Output()
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// cmd = exec.Command("wg", "syncconf", "wg0", "<(wg-quick strip wg0)")
-		// _, err = cmd.Output()
-		// if err != nil {
-		// 	panic(err)
-		// }
 	}
 }
 
@@ -218,11 +216,6 @@ func main() {
 	go func() {
 		for range time.NewTicker(time.Second).C {
 			updatePeersInfo()
-		}
-	}()
-	go func() {
-		for range time.NewTicker(time.Minute).C {
-			revokeExpiredPeers()
 		}
 	}()
 	http.Handle("/api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
