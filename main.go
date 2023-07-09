@@ -41,7 +41,6 @@ type Peer struct {
 	PresharedKey    string             `bson:"presharedKey,omitempty" json:"presharedKey"`
 	AllowedIps      string             `bson:"allowedIps,omitempty" json:"allowedIps"`
 	ExpiresAt       uint64             `bson:"expiresAt,omitempty" json:"expiresAt"`
-	Active          bool               `bson:"active,omitempty" json:"active"`
 	LatestHandshake uint64             `json:"latestHandshake"`
 	TotalRx         uint64             `json:"totalRx"`
 	TotalTx         uint64             `json:"totalTx"`
@@ -89,7 +88,6 @@ func updatePeersInfo() {
 			peers[info[0]].PresharedKey = info[1]
 			peers[info[0]].AllowedIps = string(info[3])
 			peers[info[0]].ExpiresAt = uint64(time.Now().Unix() + 60*60*24*30)
-			peers[info[0]].Active = true
 			_, err = coll.InsertOne(context.TODO(), peers[info[0]])
 			if err != nil {
 				panic(err)
@@ -129,27 +127,6 @@ func updatePeersInfo() {
 	totalTx = tempTotalTx
 	currentRx = tempCurrentRx
 	currentTx = tempCurrentTx
-}
-
-func revokeExpiredPeers() {
-	for _, p := range peers {
-		if p.Active && p.ExpiresAt < uint64(time.Now().Unix()) {
-			// _, err := coll.UpdateOne(context.Background(), bson.D{{Key: "publicKey", Value: findPeerPublicKeyByName(p.Name)}}, bson.M{"active": false})
-			// if err != nil {
-			// 	panic(err)
-			// }
-			// cmd := exec.Command("sed", "-i", "'s/"+p.PresharedKey+"/"+p.ID.Hex()+"AAAAAAAAAAAAAAAAAAA="+"/g'", "/etc/wireguard/wg0.conf")
-			// _, err = cmd.Output()
-			// if err != nil {
-			// 	panic(err)
-			// }
-			// cmd = exec.Command("wg", "syncconf", "wg0", "<(wg-quick strip wg0)")
-			// _, err = cmd.Output()
-			// if err != nil {
-			// 	panic(err)
-			// }
-		}
-	}
 }
 
 func findPeerNameByIp(ip string) string {
@@ -204,7 +181,6 @@ func init() {
 		peers[p.PublicKey] = &Peer{}
 		peers[p.PublicKey].Name = p.Name
 		peers[p.PublicKey].ID = p.ID
-		peers[p.PublicKey].Active = p.Active
 		peers[p.PublicKey].AllowedIps = p.AllowedIps
 		peers[p.PublicKey].ExpiresAt = p.ExpiresAt
 		peers[p.PublicKey].PublicKey = p.PublicKey
