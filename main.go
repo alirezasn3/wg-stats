@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/exp/slices"
@@ -35,17 +34,16 @@ type Config struct {
 }
 
 type Peer struct {
-	ID              primitive.ObjectID `bson:"_id" json:"id,omitempty"`
-	Name            string             `bson:"name,omitempty" json:"name"`
-	PublicKey       string             `bson:"publicKey,omitempty" json:"publicKey"`
-	PresharedKey    string             `bson:"presharedKey,omitempty" json:"presharedKey"`
-	AllowedIps      string             `bson:"allowedIps,omitempty" json:"allowedIps"`
-	ExpiresAt       uint64             `bson:"expiresAt,omitempty" json:"expiresAt"`
-	LatestHandshake uint64             `json:"latestHandshake"`
-	TotalRx         uint64             `json:"totalRx"`
-	TotalTx         uint64             `json:"totalTx"`
-	CurrentRx       uint64             `json:"currentRx"`
-	CurrentTx       uint64             `json:"currentTx"`
+	Name            string `bson:"name,omitempty" json:"name"`
+	PublicKey       string `bson:"publicKey,omitempty" json:"publicKey"`
+	PresharedKey    string `bson:"presharedKey,omitempty" json:"presharedKey"`
+	AllowedIps      string `bson:"allowedIps,omitempty" json:"allowedIps"`
+	ExpiresAt       uint64 `bson:"expiresAt,omitempty" json:"expiresAt"`
+	LatestHandshake uint64 `json:"latestHandshake"`
+	TotalRx         uint64 `json:"totalRx"`
+	TotalTx         uint64 `json:"totalTx"`
+	CurrentRx       uint64 `json:"currentRx"`
+	CurrentTx       uint64 `json:"currentTx"`
 }
 
 func updatePeersInfo() {
@@ -180,7 +178,6 @@ func init() {
 	for _, p := range data {
 		peers[p.PublicKey] = &Peer{}
 		peers[p.PublicKey].Name = p.Name
-		peers[p.PublicKey].ID = p.ID
 		peers[p.PublicKey].AllowedIps = p.AllowedIps
 		peers[p.PublicKey].ExpiresAt = p.ExpiresAt
 		peers[p.PublicKey].PublicKey = p.PublicKey
