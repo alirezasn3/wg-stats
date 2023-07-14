@@ -217,6 +217,7 @@ func main() {
 		data["currentTx"] = currentTx
 		data["isAdmin"] = isAdmin
 		data["name"] = name
+		c.Header("Access-Control-Allow-Origin", "*")
 		c.JSON(200, data)
 	})
 	r.POST("/api/peers", func(c *gin.Context) {
@@ -256,6 +257,7 @@ func main() {
 	r.GET("/api/peers/name", func(c *gin.Context) {
 		name := c.Param("name")
 		if p, ok := peers[findPeerPublicKeyByName(name)]; ok {
+			c.Header("Access-Control-Allow-Origin", "*")
 			c.JSON(200, p)
 		} else {
 			c.AbortWithStatus(400)
