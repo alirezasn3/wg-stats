@@ -1,7 +1,7 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { DocumentHead } from "@builder.io/qwik-city";
 
-interface Peer {
+export interface Peer {
   name: string;
   totalRx: number;
   totalTx: number;
@@ -147,7 +147,7 @@ export default component$(() => {
             </div>
             <div class="mb-4 hidden items-center max-md:flex">
               <div>{Object.keys(groups.value).length} Groups</div>
-              <div class="ml-[38px] mr-3 h-1.5 w-1.5 rounded-full bg-neutral-700" />
+              <div class="mx-3 h-1.5 w-1.5 rounded-full bg-neutral-700" />
               <div>{peers.value.length} Peers</div>
             </div>
             <input
@@ -183,7 +183,7 @@ export default component$(() => {
                 <div class="text-lg">{p.name}</div>
                 {isAdmin.value && (
                   <a
-                    href={`/peer/${p.name}`}
+                    href={`/peers/${p.name}`}
                     class="rounded bg-orange-600 px-2 py-1 tracking-wider hover:bg-orange-500"
                   >
                     EDIT

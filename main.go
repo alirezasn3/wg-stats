@@ -192,6 +192,10 @@ func main() {
 		}
 	}()
 	r := gin.Default()
+	r.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Next()
+	})
 	r.GET("/api/stats", func(c *gin.Context) {
 		ra := c.Request.Header.Get("X-Real-IP")
 		if ra == "" {
@@ -217,7 +221,6 @@ func main() {
 		data["currentTx"] = currentTx
 		data["isAdmin"] = isAdmin
 		data["name"] = name
-		c.Header("Access-Control-Allow-Origin", "*")
 		c.JSON(200, data)
 	})
 	r.POST("/api/peers", func(c *gin.Context) {
@@ -254,10 +257,10 @@ func main() {
 		}
 		c.AbortWithStatus(200)
 	})
-	r.GET("/api/peers/name", func(c *gin.Context) {
+	r.GET("/api/peers/:name", func(c *gin.Context) {
 		name := c.Param("name")
 		if p, ok := peers[findPeerPublicKeyByName(name)]; ok {
-			c.Header("Access-Control-Allow-Origin", "*")
+
 			c.JSON(200, p)
 		} else {
 			c.AbortWithStatus(400)
