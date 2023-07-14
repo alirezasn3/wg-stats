@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -16,6 +14,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/exp/slices"
+
+	"github.com/gin-gonic/gin"
 )
 
 var config Config
@@ -191,66 +191,63 @@ func main() {
 			updatePeersInfo()
 		}
 	}()
-	http.Handle("/api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			ra := r.Header.Get("X-Real-IP")
-			if ra == "" {
-				ra = r.RemoteAddr
-			}
-			name := findPeerNameByIp(strings.Split(ra, ":")[0])
-			tempPeers := make(map[string]*Peer)
-			isAdmin := slices.Contains(config.Admins, name)
-			if isAdmin {
-				tempPeers = peers
-			} else {
-				for pk, p := range peers {
-					if strings.Contains(p.Name, strings.Split(name, "-")[0]+"-") {
-						tempPeers[pk] = p
-					}
+	r := gin.Default()
+	r.GET("/api/stats", func(c *gin.Context) {
+		ra := c.Request.Header.Get("X-Real-IP")
+		if ra == "" {
+			ra = c.Request.RemoteAddr
+		}
+		name := findPeerNameByIp(strings.Split(ra, ":")[0])
+		tempPeers := make(map[string]*Peer)
+		isAdmin := slices.Contains(config.Admins, name)
+		if isAdmin {
+			tempPeers = peers
+		} else {
+			for pk, p := range peers {
+				if strings.Contains(p.Name, strings.Split(name, "-")[0]+"-") {
+					tempPeers[pk] = p
 				}
 			}
-			data := make(map[string]interface{})
-			data["peers"] = tempPeers
-			data["totalRx"] = totalRx
-			data["totalTx"] = totalTx
-			data["currentRx"] = currentRx
-			data["currentTx"] = currentTx
-			data["isAdmin"] = isAdmin
-			bytes, err := json.Marshal(data)
-			if err != nil {
-				w.Write([]byte("{}"))
-				return
-			}
-			w.Header().Add("Access-Control-Allow-Origin", "*")
-			w.Write(bytes)
-		} else if r.Method == "POST" {
-			name := findPeerNameByIp(strings.Split(r.Header.Get("X-Real-IP"), ":")[0])
-			isAdmin := slices.Contains(config.Admins, name)
-			if !isAdmin {
-				w.WriteHeader(403)
-				return
-			}
-			defer r.Body.Close()
-			bytes, err := io.ReadAll(r.Body)
-			if err != nil {
-				w.WriteHeader(400)
-				return
-			}
-			p := Peer{}
-			err = json.Unmarshal(bytes, &p)
-			if err != nil {
-				w.WriteHeader(400)
-				return
-			}
-			peers[findPeerPublicKeyByName(p.Name)].ExpiresAt = p.ExpiresAt
-			_, err = coll.UpdateOne(context.TODO(), bson.D{{Key: "publicKey", Value: peers[findPeerPublicKeyByName(p.Name)].PublicKey}}, bson.M{"$set": bson.M{"expiresAt": p.ExpiresAt}})
-			if err != nil {
-				panic(err)
-			}
-			w.WriteHeader(200)
 		}
-	}))
-	if err := http.ListenAndServe(":5051", nil); err != nil {
+		data := make(map[string]interface{})
+		data["peers"] = tempPeers
+		data["totalRx"] = totalRx
+		data["totalTx"] = totalTx
+		data["currentRx"] = currentRx
+		data["currentTx"] = currentTx
+		data["isAdmin"] = isAdmin
+		data["name"] = name
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.JSON(200, data)
+	})
+	r.POST("/api/users", func(c *gin.Context) {
+		ra := c.Request.Header.Get("X-Real-IP")
+		if ra == "" {
+			ra = c.Request.RemoteAddr
+		}
+		name := findPeerNameByIp(strings.Split(ra, ":")[0])
+		isAdmin := slices.Contains(config.Admins, name)
+		if !isAdmin {
+			c.AbortWithStatus(403)
+			return
+		}
+		p := Peer{}
+		err := c.BindJSON(&p)
+		if err != nil {
+			fmt.Println(err)
+			c.AbortWithStatus(400)
+			return
+		}
+		_, err = coll.UpdateOne(context.TODO(), bson.D{{Key: "publicKey", Value: p.PublicKey}}, bson.M{"$set": p})
+		if err != nil {
+			fmt.Println(err)
+			c.AbortWithStatus(400)
+			return
+		}
+		c.AbortWithStatus(200)
+	})
+
+	if err := r.Run(":5051"); err != nil {
 		panic(err)
 	}
 }
