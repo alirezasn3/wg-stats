@@ -138,15 +138,6 @@ func findPeerNameByIp(ip string) string {
 	return ""
 }
 
-func findPeerPublicKeyByName(name string) string {
-	for pk, p := range peers {
-		if strings.Contains(p.Name, name) {
-			return pk
-		}
-	}
-	return ""
-}
-
 func init() {
 	configPath := "config.json"
 	if len(os.Args) > 1 {
@@ -217,6 +208,7 @@ func main() {
 		data["currentTx"] = currentTx
 		data["isAdmin"] = isAdmin
 		data["name"] = name
+		fmt.Println(name)
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.JSON(200, data)
 	})
@@ -238,6 +230,14 @@ func main() {
 			c.AbortWithStatus(400)
 			return
 		}
+		if p.Name != peers[p.PublicKey].Name {
+			cmd := exec.Command("sh", "/root/wg-stats/scripts/rename-peer.sh", "/etc/wiregurad/wg0.conf", peers[p.PublicKey].Name, p.Name)
+			_, err := cmd.Output()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+		}
 		_, err = coll.UpdateOne(context.TODO(), bson.D{{Key: "publicKey", Value: p.PublicKey}}, bson.M{"$set": p})
 		if err != nil {
 			fmt.Println(err)
@@ -246,7 +246,6 @@ func main() {
 		}
 		c.AbortWithStatus(200)
 	})
-
 	if err := r.Run(":5051"); err != nil {
 		panic(err)
 	}
