@@ -1,5 +1,5 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
-import { DocumentHead, useNavigate } from "@builder.io/qwik-city";
+import { DocumentHead } from "@builder.io/qwik-city";
 
 interface Peer {
   name: string;
@@ -91,8 +91,6 @@ export default component$(() => {
   const currentTx = useSignal(0);
   const isAdmin = useSignal(false);
   const sortBy = useSignal("expiry"); // expiry, traffic, bandwidth
-
-  const nav = useNavigate();
 
   useVisibleTask$(() => {
     setInterval(async () => {
