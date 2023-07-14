@@ -14,11 +14,11 @@ export interface Peer {
   publicKey: string;
 }
 
-async function sleep(ms: number) {
+export async function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-function formatLatestHandshake(totalSeconds: number) {
+export function formatLatestHandshake(totalSeconds: number) {
   if (!totalSeconds) return "unknown";
   totalSeconds = Math.trunc(Date.now() / 1000 - totalSeconds);
   const totalMinutes = Math.trunc(totalSeconds / 60);
@@ -40,7 +40,7 @@ function formatLatestHandshake(totalSeconds: number) {
   return t;
 }
 
-function formatExpiresAt(totalSeconds: number) {
+export function formatExpiresAt(totalSeconds: number) {
   if (!totalSeconds) return "unknown";
   let t = "";
   totalSeconds = Math.trunc(totalSeconds - Date.now() / 1000);
@@ -65,7 +65,7 @@ function formatExpiresAt(totalSeconds: number) {
   return t;
 }
 
-function formatBytes(totalBytes: number) {
+export function formatBytes(totalBytes: number) {
   if (!totalBytes) return "00.00 KB";
   const totalKilos = totalBytes / 1024;
   const totalMegas = totalKilos / 1000;
@@ -125,7 +125,7 @@ export default component$(() => {
   return peers.value.length ? (
     <div class="min-h-[100vh] bg-neutral-950 font-bold text-neutral-50">
       <nav class="sticky left-0 top-0 z-10 flex h-16 w-full items-center justify-between border-b-2 border-neutral-900 bg-neutral-950 bg-opacity-90 px-4 backdrop-blur-sm backdrop-filter">
-        <div class="text-2xl">Wireguard Stats</div>
+        <div class="text-2xl max-md:text-xl">Wireguard Stats</div>
         <div class="flex items-center">
           <div class="text-lg">{self.value}</div>
         </div>
@@ -223,7 +223,9 @@ export default component$(() => {
       </main>
     </div>
   ) : (
-    <div class="flex h-[100vh] items-center justify-center">Loading...</div>
+    <div class="flex h-[100vh] items-center justify-center bg-neutral-950 text-xl font-bold text-neutral-50">
+      Loading...
+    </div>
   );
 });
 
