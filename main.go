@@ -138,6 +138,15 @@ func findPeerNameByIp(ip string) string {
 	return ""
 }
 
+func findPeerPublicKeyByName(name string) string {
+	for pk, p := range peers {
+		if strings.Contains(p.Name, name) {
+			return pk
+		}
+	}
+	return ""
+}
+
 func init() {
 	configPath := "config.json"
 	if len(os.Args) > 1 {
@@ -208,7 +217,6 @@ func main() {
 		data["currentTx"] = currentTx
 		data["isAdmin"] = isAdmin
 		data["name"] = name
-		c.Header("Access-Control-Allow-Origin", "*")
 		c.JSON(200, data)
 	})
 	r.POST("/api/peers", func(c *gin.Context) {
@@ -244,6 +252,14 @@ func main() {
 			return
 		}
 		c.AbortWithStatus(200)
+	})
+	r.GET("/api/peers/name", func(c *gin.Context) {
+		name := c.Param("name")
+		if p, ok := peers[findPeerPublicKeyByName(name)]; ok {
+			c.JSON(200, p)
+		} else {
+			c.AbortWithStatus(400)
+		}
 	})
 	if err := r.Run(":5051"); err != nil {
 		panic(err)
