@@ -1,6 +1,5 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
-import { DocumentHead } from "@builder.io/qwik-city";
-import Peer from "~/components/peer/peer";
+import { DocumentHead, useNavigate } from "@builder.io/qwik-city";
 
 interface Peer {
   name: string;
@@ -11,13 +10,78 @@ interface Peer {
   expiresAt: number;
   currentRx: number;
   currentTx: number;
+  presharedKey: string;
+  publicKey: string;
 }
 
 async function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function formatLatestHandshake(totalSeconds: number) {
+  if (!totalSeconds) return "unknown";
+  totalSeconds = Math.trunc(Date.now() / 1000 - totalSeconds);
+  const totalMinutes = Math.trunc(totalSeconds / 60);
+  const totalHours = Math.trunc(totalMinutes / 60);
+  const seconds = totalSeconds % 60;
+  const minutes = totalMinutes % 60;
+  const hours = totalHours % 24;
+  const days = Math.trunc(totalHours / 24);
+  let t = "";
+  if (days) t += `${days} day${days > 1 ? "s" : ""}`;
+  if (hours) t += `${days ? ", " : ""}${hours} hour${hours > 1 ? "s" : ""}`;
+  if (minutes)
+    t += `${hours ? ", " : ""}${minutes} minute${minutes > 1 ? "s" : ""}`;
+  if (seconds)
+    t += `${hours || minutes ? ", " : ""}${seconds} second${
+      seconds > 1 ? "s" : ""
+    }`;
+  t += " ago";
+  return t;
+}
+
+function formatExpiresAt(totalSeconds: number) {
+  if (!totalSeconds) return "unknown";
+  let t = "";
+  totalSeconds = Math.trunc(totalSeconds - Date.now() / 1000);
+  if (totalSeconds <= 0) t = "- ";
+  totalSeconds = Math.abs(totalSeconds);
+  const totalMinutes = Math.trunc(totalSeconds / 60);
+  const totalHours = Math.trunc(totalMinutes / 60);
+  const seconds = totalSeconds % 60;
+  const minutes = totalMinutes % 60;
+  const hours = totalHours % 24;
+  const days = Math.trunc(totalHours / 24);
+  if (days) t += `${days} day${days > 1 ? "s" : ""}`;
+  if (hours) t += `${days ? ", " : ""}${hours} hour${hours > 1 ? "s" : ""}`;
+  if (minutes)
+    t += `${days || hours ? ", " : ""}${minutes} minute${
+      minutes > 1 ? "s" : ""
+    }`;
+  if (seconds)
+    t += `${days || hours || minutes ? ", " : ""} ${seconds} second${
+      seconds > 1 ? "s" : ""
+    }`;
+  return t;
+}
+
+function formatBytes(totalBytes: number) {
+  if (!totalBytes) return "00.00 KB";
+  const totalKilos = totalBytes / 1024;
+  const totalMegas = totalKilos / 1000;
+  const totalGigas = totalMegas / 1000;
+  const totalTeras = totalGigas / 1000;
+  if (totalKilos < 100)
+    return `${totalKilos < 10 ? "0" : ""}${totalKilos.toFixed(2)} KB`;
+  if (totalMegas < 100)
+    return `${totalMegas < 10 ? "0" : ""}${totalMegas.toFixed(2)} MB`;
+  if (totalGigas < 100)
+    return `${totalGigas < 10 ? "0" : ""}${totalGigas.toFixed(2)} GB`;
+  return `${totalTeras < 10 ? "0" : ""}${totalTeras.toFixed(2)} TB`;
+}
+
 export default component$(() => {
+  const self = useSignal("");
   const search = useSignal("");
   const peers = useSignal<Peer[]>([]);
   const groups = useSignal<{ [key: string]: Peer[] }>({});
@@ -26,8 +90,9 @@ export default component$(() => {
   const currentRx = useSignal(0);
   const currentTx = useSignal(0);
   const isAdmin = useSignal(false);
-  const showGroupView = useSignal(false);
-  const sortByUsage = useSignal(true);
+  const sortBy = useSignal("expiry"); // expiry, traffic, bandwidth
+
+  const nav = useNavigate();
 
   useVisibleTask$(() => {
     setInterval(async () => {
@@ -42,6 +107,7 @@ export default component$(() => {
         if (groups.value[groupName]) groups.value[groupName].push(tempPeers[i]);
         else groups.value[groupName] = [tempPeers[i]];
       }
+      self.value = data.name;
       peers.value = tempPeers;
       isAdmin.value = data.isAdmin;
       totalRx.value = data.totalRx;
@@ -59,176 +125,102 @@ export default component$(() => {
   });
 
   return peers.value.length ? (
-    <>
-      {isAdmin.value && (
-        <div class="mx-2 my-4 pb-4 px-2 border-b-2 border-slate-900">
-          <div class="flex items-center justify-between text-base">
-            <div class="flex items-center">
-              <span class="text-orange-500 pr-1">{peers.value.length}</span>
-              <span class="pr-2 mr-2 border-r-2 border-slate-900">Peers</span>
-              <span class="text-orange-500 pr-1">
-                {Object.keys(groups.value).length}
-              </span>
-              <span>User Groups</span>
-            </div>
-            <div class="flex items-center">
-              {!showGroupView.value && (
-                <img
-                  onClick$={() => (sortByUsage.value = !sortByUsage.value)}
-                  class="h-8 w-8 invert rounded-full hover:cursor-pointer"
-                  src="sort.png"
-                  alt="sort icon"
-                />
-              )}
-              <div class="h-8 bg-slate-900 w-0.5 mr-1 ml-1.5" />
-              <img
-                onClick$={() => (showGroupView.value = !showGroupView.value)}
-                class="h-8 w-8 invert rounded-full hover:cursor-pointer"
-                src={showGroupView.value ? "ungroup.png" : "group.png"}
-                alt="group icon"
-              />
-            </div>
-          </div>
-          {!showGroupView.value && (
-            <div class="mt-4 flex justify-between">
-              <span>Sorted By :</span>
-              <span class="text-orange-500">
-                {sortByUsage.value ? "Total Usage" : "Current Bandwidth"}
-              </span>
-            </div>
-          )}
-          <div class="flex flex-col mt-4">
-            <div class="flex justify-between items-center pt-1">
-              Total :
-              <div class="flex items-center text-green-500">
-                <div class="flex items-center">
-                  <img
-                    src="download.png"
-                    alt="download icon"
-                    class="invert h-4 w-4 md:h-6 md:w-6 pr-0.5"
-                  />
-                  {(totalRx.value / 1000000000).toFixed(2)} GiB
-                  <span class="opacity-0">/s</span>
-                </div>
-                <div class="flex items-center border-l-2 border-slate-900 pl-1 ml-1.5">
-                  <img
-                    src="upload.png"
-                    alt="upload icon"
-                    class="invert h-4 w-4 md:h-6 md:w-6 pr-0.5"
-                  />
-                  {(totalTx.value / 1000000000).toFixed(2)} GiB
-                  <span class="opacity-0">/s</span>
-                </div>
-              </div>
-            </div>
-            <div class="flex justify-between items-center">
-              Current :
-              <div class="flex items-center text-green-500">
-                <div class="flex items-center">
-                  <img
-                    src="download.png"
-                    alt="download icon"
-                    class="invert h-4 w-4 md:h-6 md:w-6 pr-0.5"
-                  />
-                  {(currentRx.value / 1000000).toFixed(2)} MiB/s
-                </div>
-                <div class="flex items-center border-l-2 border-slate-900 pl-1 ml-1.5">
-                  <img
-                    src="upload.png"
-                    alt="upload icon"
-                    class="invert h-4 w-4 md:h-6 md:w-6 pr-0.5"
-                  />
-                  {(currentTx.value / 1000000).toFixed(2)} MiB/s
-                </div>
-              </div>
-            </div>
-          </div>
+    <div class="min-h-[100vh] bg-neutral-950 font-bold text-neutral-50">
+      <nav class="sticky left-0 top-0 z-10 flex h-16 w-full items-center justify-between border-b-2 border-neutral-900 bg-neutral-950 bg-opacity-90 px-4 backdrop-blur-sm backdrop-filter">
+        <div class="text-2xl">Wireguard Stats</div>
+        <div class="flex items-center">
+          <div class="text-lg">{self.value}</div>
         </div>
-      )}
-      <div class="max-w-[768px] flex flex-col justify-center mx-4 md:mx-auto md:px-4">
-        {isAdmin.value && !showGroupView.value && (
-          <input
-            placeholder="Search peers"
-            bind:value={search}
-            type="text"
-            class="px-4 py-2 rounded text-slate-950 mb-2 bg-slate-200"
-          />
+      </nav>
+      <main class="p-4">
+        {isAdmin.value && (
+          <div class="mb-6 flex items-center justify-between rounded-lg bg-neutral-900 px-4 py-2">
+            <div>
+              <div class="flex items-center">
+                <div>{formatBytes(currentRx.value)}/S</div>
+                <div class="mx-3 h-1.5 w-1.5 rounded-full bg-neutral-700" />
+                <div>&#8595; {formatBytes(totalRx.value)}</div>
+              </div>
+              <div class="flex items-center">
+                <div>{formatBytes(currentTx.value)}/S</div>
+                <div class="mx-3 h-1.5 w-1.5 rounded-full bg-neutral-700" />
+                <div>&#8593; {formatBytes(totalTx.value)}</div>
+              </div>
+            </div>
+            <input
+              placeholder="Search Peers"
+              bind:value={search}
+              type="text"
+              class="h-8 w-64 rounded px-2 py-1 text-neutral-950"
+            />
+            <div class="flex items-center">
+              <div>{Object.keys(groups.value).length} Groups</div>
+              <div class="mx-3 h-1.5 w-1.5 rounded-full bg-neutral-700" />
+              <div>{peers.value.length} Peers</div>
+            </div>
+          </div>
         )}
-        {showGroupView.value
-          ? Object.values(groups.value)
-              .sort((a, b) => {
-                return a.reduce((sum, p) => sum + p.totalRx, 0) >=
-                  b.reduce((sum, p) => sum + p.totalRx, 0)
-                  ? -1
-                  : 1;
-              })
-              .map((g, j) => (
-                <div
-                  key={g[0].name}
-                  class="border-2 border-slate-900 rounded my-4 p-2"
+        {peers.value
+          .filter((p) =>
+            p.name.toLowerCase().includes(search.value.toLocaleLowerCase())
+          )
+          .sort((a, b) => {
+            if (sortBy.value === "expiry")
+              return a.expiresAt < b.expiresAt ? -1 : 1;
+            if (sortBy.value === "traffic")
+              return a.totalRx >= b.totalRx ? -1 : 1;
+            return a.currentRx >= b.currentRx ? -1 : 1;
+          })
+          .map((p, i) => (
+            <div
+              key={i}
+              class="my-2 rounded border-2 border-neutral-800 bg-neutral-900 px-4 py-2"
+            >
+              <div class="mb-2 flex items-center justify-between border-b-[1px] border-neutral-800 pb-2">
+                <div class="text-lg">{p.name}</div>
+                {isAdmin.value && (
+                  <a
+                    href={`/peer/${p.name}`}
+                    class="rounded bg-orange-600 px-2 py-1 tracking-wider hover:bg-orange-500"
+                  >
+                    EDIT
+                  </a>
+                )}
+              </div>
+              <div class="mb-2 flex items-center">
+                <div>&#8595; {formatBytes(p.currentRx)}/S</div>
+                <div class="mx-2 h-1 w-1 rounded-full bg-neutral-700" />
+                <div>{formatBytes(p.totalRx)}</div>
+              </div>
+              <div class="mb-2 flex items-center">
+                <div>&#8593; {formatBytes(p.currentTx)}/S</div>
+                <div class="mx-2 h-1 w-1 rounded-full bg-neutral-700" />
+                <div>{formatBytes(p.totalTx)}</div>
+              </div>
+              <div class="mb-2 max-md:truncate max-md:text-xs max-md:tracking-tighter">
+                <span>Latest Handshake</span>
+                <span class="mx-1">:</span>
+                <span>{formatLatestHandshake(p.latestHandshake)}</span>
+              </div>
+              <div class="max-md:truncate max-md:text-xs max-md:tracking-tighter">
+                <span>Expiry</span>
+                <span class="mx-1">:</span>
+                <span
+                  class={
+                    p.expiresAt - Date.now() / 1000 <= 0
+                      ? "text-red-500"
+                      : "text-blue-500"
+                  }
                 >
-                  <span class="text-orange-500">
-                    {j + 1}. {g[0].name.split("-")[0]}
-                  </span>
-                  <div class="flex items-center justify-between py-2 mb-4 border-b-2 border-slate-900">
-                    <span>Total Usage:</span>
-                    <div class="flex my-2 text-green-500">
-                      <div class="flex items-center">
-                        <img
-                          src="download.png"
-                          alt="download icon"
-                          class="invert w-6 h-6"
-                        />
-                        {(
-                          g.reduce((sum, p) => sum + p.totalRx, 0) / 1000000000
-                        ).toFixed(2)}{" "}
-                        GiB
-                      </div>
-                      <div class="border-l-2 pl-0.5 ml-1 border-slate-800 flex items-center">
-                        <img
-                          src="upload.png"
-                          alt="upload icon"
-                          class="invert w-6 h-6"
-                        />
-                        {(
-                          g.reduce((sum, p) => sum + p.totalTx, 0) / 1000000000
-                        ).toFixed(2)}{" "}
-                        GiB
-                      </div>
-                    </div>
-                  </div>
-                  {g
-                    .sort((a, b) => (a.totalRx >= b.totalRx ? -1 : 1))
-                    .map((p, i) => (
-                      <Peer
-                        {...p}
-                        index={i}
-                        isAdmin={isAdmin.value}
-                        key={i + p.name}
-                      />
-                    ))}
-                </div>
-              ))
-          : peers.value
-              .filter((p) =>
-                p.name.toLowerCase().includes(search.value.toLocaleLowerCase())
-              )
-              .sort((a, b) => {
-                if (sortByUsage.value) return a.totalRx >= b.totalRx ? -1 : 1;
-                return a.currentRx >= b.currentRx ? -1 : 1;
-              })
-              .map((p, i) => (
-                <Peer
-                  {...p}
-                  index={i}
-                  isAdmin={isAdmin.value}
-                  key={i + p.name}
-                />
-              ))}
-      </div>
-    </>
+                  {formatExpiresAt(p.expiresAt)}
+                </span>
+              </div>
+            </div>
+          ))}
+      </main>
+    </div>
   ) : (
-    <div class="flex items-center justify-center h-[100vh]">Loading...</div>
+    <div class="flex h-[100vh] items-center justify-center">Loading...</div>
   );
 });
 
@@ -236,7 +228,7 @@ export const head: DocumentHead = {
   title: "Wireguard Stats",
   meta: [
     {
-      name: "Wireguard Stats",
+      name: "description",
       content: "Wireguard Stats",
     },
   ],
