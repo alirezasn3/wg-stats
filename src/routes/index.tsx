@@ -132,26 +132,31 @@ export default component$(() => {
       </nav>
       <main class="p-4">
         {isAdmin.value && (
-          <div class="mb-6 flex items-center justify-between rounded-lg bg-neutral-900 px-4 py-2">
+          <div class="mb-6 flex items-center justify-between rounded-lg bg-neutral-900 px-4 py-2 max-md:flex-col max-md:items-start">
             <div>
-              <div class="flex items-center">
-                <div>{formatBytes(currentRx.value)}/S</div>
+              <div class="flex items-center max-md:mb-2">
+                <div>&#8595; {formatBytes(currentRx.value)}/S</div>
                 <div class="mx-3 h-1.5 w-1.5 rounded-full bg-neutral-700" />
-                <div>&#8595; {formatBytes(totalRx.value)}</div>
+                <div>{formatBytes(totalRx.value)}</div>
               </div>
-              <div class="flex items-center">
-                <div>{formatBytes(currentTx.value)}/S</div>
+              <div class="flex items-center max-md:mb-2">
+                <div>&#8593; {formatBytes(currentTx.value)}/S</div>
                 <div class="mx-3 h-1.5 w-1.5 rounded-full bg-neutral-700" />
-                <div>&#8593; {formatBytes(totalTx.value)}</div>
+                <div>{formatBytes(totalTx.value)}</div>
               </div>
+            </div>
+            <div class="mb-4 hidden items-center max-md:flex">
+              <div>{Object.keys(groups.value).length} Groups</div>
+              <div class="ml-[38px] mr-3 h-1.5 w-1.5 rounded-full bg-neutral-700" />
+              <div>{peers.value.length} Peers</div>
             </div>
             <input
               placeholder="Search Peers"
               bind:value={search}
               type="text"
-              class="h-8 w-64 rounded px-2 py-1 text-neutral-950"
+              class="h-8 w-64 rounded px-2 py-1 text-neutral-950 max-md:mb-2 max-md:w-full"
             />
-            <div class="flex items-center">
+            <div class="flex items-center max-md:hidden">
               <div>{Object.keys(groups.value).length} Groups</div>
               <div class="mx-3 h-1.5 w-1.5 rounded-full bg-neutral-700" />
               <div>{peers.value.length} Peers</div>

@@ -208,7 +208,6 @@ func main() {
 		data["currentTx"] = currentTx
 		data["isAdmin"] = isAdmin
 		data["name"] = name
-		fmt.Println(name)
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.JSON(200, data)
 	})
