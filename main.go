@@ -212,7 +212,7 @@ func main() {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.JSON(200, data)
 	})
-	r.POST("/api/users", func(c *gin.Context) {
+	r.POST("/api/peers", func(c *gin.Context) {
 		ra := c.Request.Header.Get("X-Real-IP")
 		if ra == "" {
 			ra = c.Request.RemoteAddr
